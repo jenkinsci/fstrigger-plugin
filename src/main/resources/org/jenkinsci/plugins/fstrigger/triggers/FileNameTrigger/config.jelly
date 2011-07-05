@@ -1,0 +1,47 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+     <f:entry field="folderPath" title="${%Folder Path}">
+        <f:textbox name="folderPath"
+                   checkUrl="'${rootURL}/trigger/FileNameTrigger/checkFolderPath?folderPath='+encodeURIComponent(this.value)"
+                   value="${instance.folderPath}"/>
+     </f:entry>
+
+     <f:entry field="fileName" title="${%File Name}" description="${%description.fileName('http://ant.apache.org/manual/Types/fileset.html')}">
+        <f:textbox name="fileName" value="${instance.fileName}"/>
+     </f:entry>
+
+     <f:advanced>
+         <f:entry field="strategy" title="${%Choose your strategy}">
+            <f:radio name="strategy" value="IGNORE" checked="${instance.strategy=='IGNORE'}"/>
+            <label class="attach-previous">Ignore file</label>
+            <br/>
+            <f:radio name="strategy" value="LATEST" checked="${instance.strategy=='LATEST' or h.defaultToTrue(instance.getStrategy())}"/>
+            <label class="attach-previous">Use the most recent</label>
+         </f:entry>
+     </f:advanced>
+
+     <f:entry>
+         <table style="width:100%">
+              <f:optionalBlock
+                 field="inspectingContentFile"
+                 title="${%Inspect file contents}">
+
+                   <f:entry field="doNotCheckLastModificationDate">
+                       <f:checkbox name="doNotCheckLastModificationDate" checked="${instance.doNotCheckLastModificationDate}" default="${true}" />
+                       <label class="attach-previous">${%Ignore modification date}</label>
+                   </f:entry>
+
+                   <f:block>
+                        <f:hetero-list name="contentFileTypes" descriptors="${descriptor.listFSTriggerFileNameDescriptors}" items="${instance.contentFileTypes}" />
+                        <label class="attach-previous">${%Content nature to check}</label>
+                   </f:block>
+
+              </f:optionalBlock>
+         </table>
+     </f:entry>
+
+    <f:entry title="${%Schedule}" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
+        <f:textarea name="cronTabSpec" checkUrl="'${rootURL}/trigger/TimerTrigger/check?value='+encodeURIComponent(this.value)" value="${instance.spec}"/>
+    </f:entry>
+
+</j:jelly>

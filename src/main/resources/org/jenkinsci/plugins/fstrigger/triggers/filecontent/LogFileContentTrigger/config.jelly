@@ -1,0 +1,13 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+  <f:entry title="${descriptor.label}">
+     <f:repeatable var="element" items="${instance.regexElements}">
+        <table width="100%">
+           <f:entry field="regex" title="${%Regular Expression}">
+               <f:textbox name="log.regex" value="${element.regex}"/>
+           </f:entry>
+        </table>
+     </f:repeatable>
+  </f:entry>
+
+</j:jelly>

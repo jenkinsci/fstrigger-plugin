@@ -1,0 +1,23 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry field="path" title="${%Path}">
+        <f:textbox name="path" value="${instance.path}"/>
+    </f:entry>
+
+    <f:advanced>
+
+        <f:entry field="includes" title="${%Includes}"  description="${%description.includes('http://ant.apache.org/manual/Types/fileset.html')}">
+            <f:textbox name="includes" value="${instance.includes}"/>
+        </f:entry>
+
+        <f:entry field="excludes" title="${%Excludes}">
+            <f:textbox name="excludes" value="${instance.excludes}"/>
+        </f:entry>
+
+    </f:advanced>
+
+    <f:entry title="${%Schedule}" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
+        <f:textarea name="cronTabSpec" checkUrl="'${rootURL}/trigger/TimerTrigger/check?value='+encodeURIComponent(this.value)" value="${instance.spec}"/>
+    </f:entry>
+
+</j:jelly>

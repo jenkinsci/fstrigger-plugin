@@ -1,0 +1,4 @@
+<div>
+  This plug-in makes it possible to trigger a build when a file or a set of files change.
+  The plugin-in provides polling mechanisms on the date or the content of a file.
+</div>

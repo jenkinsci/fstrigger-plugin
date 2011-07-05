@@ -1,0 +1,16 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+  <f:entry title="${descriptor.label}">
+
+     <f:entry field="keys2Inspect" title="${%Keys to inspect}">
+        <f:textbox name="keys2Inspect" value="${instance.keys2Inspect}"/>
+     </f:entry>
+
+     <f:entry field="allKeys">
+         <f:checkbox name="allKeys" checked="${instance.allKeys}" />
+         <label class="attach-previous">All keys</label>
+     </f:entry>
+
+   </f:entry>
+
+</j:jelly>
