@@ -227,7 +227,9 @@ public class FileNameTrigger extends AbstractTrigger {
         try {
             //Compute the file
             resolvedFile = computedFile(new FSTriggerLog(), true);
-            resolvedFileLastModified = resolvedFile.lastModified();
+            if (resolvedFile != null) {
+                resolvedFileLastModified = resolvedFile.lastModified();
+            }
 
             // Initialize the memory information if whe introspect the content
             initContentElementsIfNeed();
@@ -278,7 +280,11 @@ public class FileNameTrigger extends AbstractTrigger {
     private void refreshMemoryInfo(FilePath newComputedFile) throws FSTriggerException {
         resolvedFile = newComputedFile;
         try {
-            resolvedFileLastModified = resolvedFile.lastModified();
+            if (resolvedFile != null) {
+                resolvedFileLastModified = resolvedFile.lastModified();
+            } else {
+                resolvedFileLastModified = 0l;
+            }
         } catch (IOException ioe) {
             throw new FSTriggerException(ioe);
         } catch (InterruptedException ie) {
