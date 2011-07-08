@@ -11,6 +11,7 @@ import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
 import net.sf.json.JSON;
+import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
@@ -505,9 +506,10 @@ public class FileNameTrigger extends AbstractTrigger {
                 fileNameTrigger.setDoNotCheckLastModificationDate(inspectingFileContentJSONObject.getBoolean("doNotCheckLastModificationDate"));
                 //Content Types
                 JSON contentFileTypesJsonElt;
-                if (inspectingFileContentJSONObject.isArray()) {
+                try{
                     contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONArray("contentFileTypes");
-                } else {
+                }
+                catch (JSONException jsone){
                     contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONObject("contentFileTypes");
                 }
                 List<FSTriggerContentFileType> types = req.bindJSONToList(FSTriggerContentFileType.class, contentFileTypesJsonElt);
