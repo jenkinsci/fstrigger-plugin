@@ -10,12 +10,12 @@ import java.net.URISyntaxException;
 /**
  * @author Gregory Boissinot
  */
-public class ZIPFileContentTest extends AbstractArchiveFileContentTest {
+public class TARFileContentTest extends AbstractArchiveFileContentTest {
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        type = new ZIPFileContent();
+        type = new TarFileContent();
     }
 
     public FSTriggerContentFileType getTypeInstance() {
@@ -23,15 +23,15 @@ public class ZIPFileContentTest extends AbstractArchiveFileContentTest {
     }
 
     protected File getInitFile() throws URISyntaxException {
-        return new File(this.getClass().getResource("ZIPFileContent/initFile.zip").toURI());
+        return new File(this.getClass().getResource("TARFileContent/initFile.tar").toURI());
     }
 
     protected File getNewFileAddedFile() throws URISyntaxException {
-        return new File(this.getClass().getResource("ZIPFileContent/newFileAddedFile.zip").toURI());
+        return new File(this.getClass().getResource("TARFileContent/newFileAddedFile.tar").toURI());
     }
 
     protected File getNewFileChangedContentOneFile() throws URISyntaxException {
-        return new File(this.getClass().getResource("ZIPFileContent/newFileChangedContentOneFile.zip").toURI());
+        return new File(this.getClass().getResource("TARFileContent/newFileChangedContentOneFile.tar").toURI());
     }
 
     protected File getNoExistFile() {
@@ -39,6 +39,6 @@ public class ZIPFileContentTest extends AbstractArchiveFileContentTest {
     }
 
     protected File getNotGoodTypeFile() throws URISyntaxException {
-        return new File(this.getClass().getResource("ZIPFileContent/noZIPFile.zip").toURI());
+        return new File(this.getClass().getResource("TARFileContent/noTarFile.tar").toURI());
     }
 }

@@ -49,8 +49,11 @@ public class TarFileContent extends FSTriggerContentFileType {
     protected void initForContent(File file) throws FSTriggerException {
         try {
             tarEntries = getTarEntries(file);
+            if (tarEntries.isEmpty()){
+                throw new FSTriggerException("The tar file is empty.");
+            }
             tarContent = new StringBuilder();
-            fillZipContent(tarEntries, tarContent);
+            fillTarContent(tarEntries, tarContent);
 
         } catch (IOException ioe) {
             throw new FSTriggerException(ioe);
@@ -181,11 +184,11 @@ public class TarFileContent extends FSTriggerContentFileType {
         sb.append("The old content is:\n");
         sb.append(tarContent);
         sb.append("The new content is:\n");
-        fillZipContent(newTarEntries, sb);
+        fillTarContent(newTarEntries, sb);
         return sb.toString();
     }
 
-    private void fillZipContent(List<TarEntry> newTarEntries, StringBuilder sb) {
+    private void fillTarContent(List<TarEntry> newTarEntries, StringBuilder sb) {
 
         for (TarEntry tarEntry : newTarEntries) {
             Object[] elements = new Object[]{
