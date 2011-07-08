@@ -506,10 +506,9 @@ public class FileNameTrigger extends AbstractTrigger {
                 fileNameTrigger.setDoNotCheckLastModificationDate(inspectingFileContentJSONObject.getBoolean("doNotCheckLastModificationDate"));
                 //Content Types
                 JSON contentFileTypesJsonElt;
-                try{
+                try {
                     contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONArray("contentFileTypes");
-                }
-                catch (JSONException jsone){
+                } catch (JSONException jsone) {
                     contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONObject("contentFileTypes");
                 }
                 List<FSTriggerContentFileType> types = req.bindJSONToList(FSTriggerContentFileType.class, contentFileTypesJsonElt);

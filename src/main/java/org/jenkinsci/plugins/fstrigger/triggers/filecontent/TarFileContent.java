@@ -49,7 +49,7 @@ public class TarFileContent extends FSTriggerContentFileType {
     protected void initForContent(File file) throws FSTriggerException {
         try {
             tarEntries = getTarEntries(file);
-            if (tarEntries.isEmpty()){
+            if (tarEntries.isEmpty()) {
                 throw new FSTriggerException("The tar file is empty.");
             }
             tarContent = new StringBuilder();
