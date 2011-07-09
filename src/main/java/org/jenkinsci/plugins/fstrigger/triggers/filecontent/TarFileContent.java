@@ -213,6 +213,11 @@ public class TarFileContent extends FSTriggerContentFileType {
     public static class TarFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<TarFileContent> {
 
         @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return TarFileContent.class;
+        }
+
+        @Override
         public String getDisplayName() {
             return "Monitor the contents of a Tar file";
         }

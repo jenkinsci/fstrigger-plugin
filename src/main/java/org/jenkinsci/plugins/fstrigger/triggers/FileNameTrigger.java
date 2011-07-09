@@ -420,9 +420,12 @@ public class FileNameTrigger extends AbstractTrigger {
         if (contentFileTypes != null) {
             subActionTitles = new String[contentFileTypes.length];
             for (int i = 0; i < contentFileTypes.length; i++) {
-                Descriptor<FSTriggerContentFileType> descriptor = contentFileTypes[i].getDescriptor();
-                if (descriptor instanceof FSTriggerContentFileTypeDescriptor) {
-                    subActionTitles[i] = ((FSTriggerContentFileTypeDescriptor) descriptor).getLabel();
+                FSTriggerContentFileType fsTriggerContentFileType = contentFileTypes[i];
+                if (fsTriggerContentFileType != null) {
+                    Descriptor<FSTriggerContentFileType> descriptor = fsTriggerContentFileType.getDescriptor();
+                    if (descriptor instanceof FSTriggerContentFileTypeDescriptor) {
+                        subActionTitles[i] = ((FSTriggerContentFileTypeDescriptor) descriptor).getLabel();
+                    }
                 }
             }
         }

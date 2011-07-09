@@ -84,6 +84,11 @@ public class SimpleFileContent extends FSTriggerContentFileType {
     public static class SimpleFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<SimpleFileContent> {
 
         @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return SimpleFileContent.class;
+        }
+
+        @Override
         public String getDisplayName() {
             return "Monitor a change of the content";
         }

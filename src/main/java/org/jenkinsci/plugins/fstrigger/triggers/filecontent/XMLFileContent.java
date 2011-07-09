@@ -156,6 +156,11 @@ public class XMLFileContent extends FSTriggerContentFileType {
     public static class XMLFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<XMLFileContent> {
 
         @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return XMLFileContent.class;
+        }
+
+        @Override
         public String getDisplayName() {
             return "Monitor the contents of an XML file";
         }

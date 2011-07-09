@@ -179,6 +179,11 @@ public class ZIPFileContent extends FSTriggerContentFileType {
     public static class ZIPFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<ZIPFileContent> {
 
         @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return ZIPFileContent.class;
+        }
+
+        @Override
         public String getDisplayName() {
             return "Monitor the contents of a ZIP file";
         }
@@ -187,7 +192,6 @@ public class ZIPFileContent extends FSTriggerContentFileType {
         public String getLabel() {
             return "ZIP File";
         }
-
     }
 
 }

@@ -173,6 +173,11 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
     public static class PropertiesFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<PropertiesFileContent> {
 
         @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return PropertiesFileContent.class;
+        }
+
+        @Override
         public String getDisplayName() {
             return "Monitor the contents of a properties file";
         }

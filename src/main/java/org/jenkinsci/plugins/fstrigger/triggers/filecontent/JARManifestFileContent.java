@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
+import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -33,6 +34,11 @@ public class JARManifestFileContent extends ManifestFileContent {
     @Extension
     @SuppressWarnings("unused")
     public static class JARManifestFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<JARManifestFileContent> {
+
+        @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return JARManifestFileContent.class;
+        }
 
         @Override
         public String getDisplayName() {

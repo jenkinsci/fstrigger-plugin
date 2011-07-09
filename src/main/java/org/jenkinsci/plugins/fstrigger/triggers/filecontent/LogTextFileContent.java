@@ -82,6 +82,11 @@ public class LogTextFileContent extends FSTriggerContentFileType {
     public static class LogFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<LogTextFileContent> {
 
         @Override
+        public Class<? extends FSTriggerContentFileType> getType() {
+            return LogTextFileContent.class;
+        }
+
+        @Override
         public String getDisplayName() {
             return "Poll the contents of a text file (e.g. log file)";
         }

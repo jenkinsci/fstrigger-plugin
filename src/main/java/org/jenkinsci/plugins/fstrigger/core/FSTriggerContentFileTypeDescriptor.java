@@ -14,4 +14,11 @@ public abstract class FSTriggerContentFileTypeDescriptor<T extends FSTriggerCont
      */
     public abstract String getLabel();
 
+    public abstract Class<? extends FSTriggerContentFileType> getType();
+
+    @SuppressWarnings("unused")
+    public  String getTypePackageName(){
+        return  getType().getName();
+    }
+
 }
