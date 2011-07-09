@@ -384,5 +384,10 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         public String getLabel() {
             return "Monitor folder";
         }
+
+        public String getHelpFile() {
+            return "/plugin/fstrigger/help-monitorFolder.html";
+        }
+
     }
 }

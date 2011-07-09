@@ -461,6 +461,10 @@ public class FileNameTrigger extends AbstractTrigger {
             return "Monitor file";
         }
 
+        @Override
+        public String getHelpFile() {
+            return "/plugin/fstrigger/help-monitorFile.html";
+        }
 
         public DescriptorExtensionList getListFSTriggerFileNameDescriptors() {
             return DescriptorExtensionList.createDescriptorList(Hudson.getInstance(), FSTriggerContentFileType.class);
