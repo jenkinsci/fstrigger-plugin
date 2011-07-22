@@ -454,11 +454,11 @@ public class FileNameTrigger extends AbstractTrigger {
 
         @Override
         public String getDisplayName() {
-            return "[FSTrigger] - Monitor file";
+            return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_fileNameContent_displayName();
         }
 
         public String getLabel() {
-            return "Monitor file";
+            return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_fileNameContent_label();
         }
 
         @Override

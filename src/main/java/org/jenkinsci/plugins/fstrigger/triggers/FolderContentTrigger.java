@@ -378,11 +378,11 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
         @Override
         public String getDisplayName() {
-            return "[FSTrigger] - Monitor folder";
+            return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_folderContent_displayName();
         }
 
         public String getLabel() {
-            return "Monitor folder";
+            return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_folderContent_label();
         }
 
         public String getHelpFile() {
