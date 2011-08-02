@@ -10,7 +10,7 @@
     <artifactId>fstrigger</artifactId>
     <packaging>hpi</packaging>
     <name>Jenkins Filesystem Trigger Plug-in</name>
-    <version>0.10.1</version>
+    <version>0.10.2-SNAPSHOT</version>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/FSTrigger+Plugin</url>
 
     <licenses>
