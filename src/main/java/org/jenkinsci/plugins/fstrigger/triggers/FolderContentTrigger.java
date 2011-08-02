@@ -133,8 +133,8 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
                 if (nodePath != null) {
                     currentSlave = nodePath;
                     try {
-                        result = nodePath.act(new FilePath.FileCallable<Map>() {
-                            public Map invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
+                        result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
+                            public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
                                 try {
                                     return getFileInfo(path, includes, excludes);
                                 } catch (FSTriggerException fse) {
@@ -363,7 +363,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
     @Extension
     @SuppressWarnings("unused")
-    public static class FolderContentTriggerDescriptor extends TriggerDescriptor {
+    public static class FolderContentTriggerDescriptor extends FSTriggerDescriptor {
 
         private transient final SequentialExecutionQueue queue = new SequentialExecutionQueue(Executors.newSingleThreadExecutor());
 
@@ -381,10 +381,12 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_folderContent_displayName();
         }
 
+        @Override
         public String getLabel() {
             return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_folderContent_label();
         }
 
+        @Override
         public String getHelpFile() {
             return "/plugin/fstrigger/help-monitorFolder.html";
         }

@@ -439,7 +439,7 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @Extension
     @SuppressWarnings("unused")
-    public static class FileNameTriggerDescriptor extends TriggerDescriptor {
+    public static class FileNameTriggerDescriptor extends FSTriggerDescriptor {
 
         private transient final SequentialExecutionQueue queue = new SequentialExecutionQueue(Executors.newSingleThreadExecutor());
 
@@ -457,6 +457,7 @@ public class FileNameTrigger extends AbstractTrigger {
             return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_fileNameContent_displayName();
         }
 
+        @Override
         public String getLabel() {
             return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_fileNameContent_label();
         }
@@ -466,6 +467,7 @@ public class FileNameTrigger extends AbstractTrigger {
             return "/plugin/fstrigger/help-monitorFile.html";
         }
 
+        @SuppressWarnings("unchecked")
         public DescriptorExtensionList getListFSTriggerFileNameDescriptors() {
             return DescriptorExtensionList.createDescriptorList(Hudson.getInstance(), FSTriggerContentFileType.class);
         }
