@@ -242,19 +242,19 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
         //No new files matching criterion, we don't trigger the build
         if (newMd5Map.isEmpty()) {
-            log.info("The folder '" + new File(path) + "' does not contain any files matching the criteria.");
+            log.info("The folder '" + new File(path) + "' does not contain any files matching the includes/excludes information.");
             return false;
         }
 
         //There was no any files for criterion and now there are some files
         if (this.md5Map == null) {
-            log.info("The folder '" + new File(path) + "' contains new files matching the criteria.");
+            log.info("The folder '" + new File(path) + "' contains new files matching the includes/excludes information.");
             return true;
         }
 
         //There are more or fewer files
         if (this.md5Map.size() != newMd5Map.size()) {
-            log.info("The folder '" + new File(path) + "' contents have changed.");
+            log.info("The folder '" + new File(path) + "' content has changed.");
             return true;
         }
 
