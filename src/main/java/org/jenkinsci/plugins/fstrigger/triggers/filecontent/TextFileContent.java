@@ -16,12 +16,12 @@ import java.util.regex.Pattern;
 /**
  * @author Gregory Boissinot
  */
-public class LogTextFileContent extends FSTriggerContentFileType {
+public class TextFileContent extends FSTriggerContentFileType {
 
-    private List<LogTextFileContentEntry> regexElements = new ArrayList<LogTextFileContentEntry>();
+    private List<TextFileContentEntry> regexElements = new ArrayList<TextFileContentEntry>();
 
     @DataBoundConstructor
-    public LogTextFileContent(List<LogTextFileContentEntry> element) {
+    public TextFileContent(List<TextFileContentEntry> element) {
         this.regexElements = element;
     }
 
@@ -31,15 +31,16 @@ public class LogTextFileContent extends FSTriggerContentFileType {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void setMemoryInfo(Object memoryInfo) {
         if (!(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
-        this.regexElements = (List) memoryInfo;
+        this.regexElements = (List<TextFileContentEntry>) memoryInfo;
     }
 
     @SuppressWarnings("unused")
-    public List<LogTextFileContentEntry> getRegexElements() {
+    public List<TextFileContentEntry> getRegexElements() {
         return regexElements;
     }
 
@@ -50,13 +51,15 @@ public class LogTextFileContent extends FSTriggerContentFileType {
     @Override
     protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
 
+        FileReader fileReader = null;
+        BufferedReader bufferedReader = null;
         try {
-            FileReader fileReader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            fileReader = new FileReader(file);
+            bufferedReader = new BufferedReader(fileReader);
             String line;
             //Check line by line if a pattern matches
             while ((line = bufferedReader.readLine()) != null) {
-                for (LogTextFileContentEntry regexEntry : regexElements) {
+                for (TextFileContentEntry regexEntry : regexElements) {
                     Pattern pattern = Pattern.compile(regexEntry.getRegex());
                     Matcher matcher = pattern.matcher(line);
                     if (matcher.matches()) {
@@ -65,13 +68,27 @@ public class LogTextFileContent extends FSTriggerContentFileType {
                     }
                 }
             }
-            bufferedReader.close();
-            fileReader.close();
         } catch (FileNotFoundException fne) {
             throw new FSTriggerException(fne);
         } catch (IOException ioe) {
             throw new FSTriggerException(ioe);
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (IOException ioe) {
+                    throw new FSTriggerException(ioe);
+                }
+            }
+            if (fileReader != null) {
+                try {
+                    fileReader.close();
+                } catch (IOException ioe) {
+                    throw new FSTriggerException(ioe);
+                }
+            }
         }
+
 
         return false;
     }
@@ -79,11 +96,11 @@ public class LogTextFileContent extends FSTriggerContentFileType {
 
     @Extension
     @SuppressWarnings("unused")
-    public static class LogFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<LogTextFileContent> {
+    public static class LogFileContentDescriptor extends FSTriggerContentFileTypeDescriptor<TextFileContent> {
 
         @Override
         public Class<? extends FSTriggerContentFileType> getType() {
-            return LogTextFileContent.class;
+            return TextFileContent.class;
         }
 
         @Override

@@ -7,12 +7,12 @@ import java.io.Serializable;
 /**
  * @author Gregory Boissinot
  */
-public class LogTextFileContentEntry implements Serializable {
+public class TextFileContentEntry implements Serializable {
 
     private String regex;
 
     @DataBoundConstructor
-    public LogTextFileContentEntry(String regex) {
+    public TextFileContentEntry(String regex) {
         this.regex = regex;
     }
 

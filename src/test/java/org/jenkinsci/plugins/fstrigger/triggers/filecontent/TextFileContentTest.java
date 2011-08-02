@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Gregory Boissinot
  */
-public class LogTextFileContentTest extends FileContentAbstractTest {
+public class TextFileContentTest extends FileContentAbstractTest {
 
     FSTriggerContentFileType type;
 
@@ -32,9 +32,9 @@ public class LogTextFileContentTest extends FileContentAbstractTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        List<LogTextFileContentEntry> expressions = new ArrayList<LogTextFileContentEntry>();
-        expressions.add(new LogTextFileContentEntry("\\w*ERROR\\s*\\w*"));
-        type = new LogTextFileContent(expressions);
+        List<TextFileContentEntry> expressions = new ArrayList<TextFileContentEntry>();
+        expressions.add(new TextFileContentEntry("\\w*ERROR\\s*\\w*"));
+        type = new TextFileContent(expressions);
     }
 
     @Test(expected = NullPointerException.class)
