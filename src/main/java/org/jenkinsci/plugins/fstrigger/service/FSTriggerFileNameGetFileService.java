@@ -39,12 +39,12 @@ public class FSTriggerFileNameGetFileService {
 
     public File call() throws FSTriggerException {
 
-        if (fileInfo.getFileName() == null) {
+        if (fileInfo.getFilePathPattern() == null) {
             return null;
         }
 
-        log.info("\n" + String.format("Trying to monitor the  file '%s'", fileInfo.getFileName()));
-        FileNameExtractInfo extractInfo = extract(fileInfo.getFileName());
+        log.info("\n" + String.format("Trying to monitor the file pattern '%s'", fileInfo.getFilePathPattern()));
+        FileNameExtractInfo extractInfo = extract(fileInfo.getFilePathPattern());
         String folder = extractInfo.getRootDir();
         String fileName = extractInfo.getFileNamePattern();
 
@@ -72,7 +72,7 @@ public class FSTriggerFileNameGetFileService {
 
         if (fileSet.size() > 1) {
 
-            log.info(String.format("There is more than one file for the file pattern '%s'.", fileInfo.getFileName()));
+            log.info(String.format("There is more than one file for the file pattern '%s'.", fileInfo.getFilePathPattern()));
             if (FileNameTrigger.STRATEGY_IGNORE.equals(fileInfo.getStrategy())) {
                 log.info("Regarding the checked strategy, the schedule has been ignored.");
                 return null;
@@ -119,34 +119,37 @@ public class FSTriggerFileNameGetFileService {
         }
     }
 
-    private FileNameExtractInfo extract(String guiFileName) {
+    private FileNameExtractInfo extract(String filePattern) throws FSTriggerException {
 
-        String fileName = filter(guiFileName);
-
-        if (fileName.length() < 3) {
-            //TODO
+        String fileToMonitor = filter(filePattern);
+        if (fileToMonitor == null) {
+            throw new FSTriggerException("There is not files to monitor.");
         }
 
-        if (fileName.lastIndexOf(File.separator) == -1) {
-            //TODO
+        if (fileToMonitor.length() < 2) {
+            throw new FSTriggerException("The given pattern for the file to monitor must have a directory.");
+        }
+
+        if (fileToMonitor.lastIndexOf(File.separator) == -1) {
+            throw new FSTriggerException("The given pattern for the file to monitor must have a directory.");
         }
 
         return new FileNameExtractInfo(
-                fileName.substring(0, fileName.lastIndexOf(File.separator)),
-                fileName.substring(fileName.lastIndexOf(File.separator) + 1));
+                fileToMonitor.substring(0, fileToMonitor.lastIndexOf(File.separator)),
+                fileToMonitor.substring(fileToMonitor.lastIndexOf(File.separator) + 1));
     }
 
 
-    private String filter(String fileName) {
+    private String filter(String filePattern) {
 
-        if (fileName == null) {
+        if (filePattern == null) {
             return null;
         }
 
-        fileName = fileName.replaceAll("[\t\r\n]+", " ");
-        fileName = fileName.replaceAll("\\\\", File.separator);
-        fileName = fileName.trim();
+        filePattern = filePattern.replaceAll("[\t\r\n]+", " ");
+        filePattern = filePattern.replaceAll("\\\\", File.separator);
+        filePattern = filePattern.trim();
 
-        return fileName;
+        return filePattern;
     }
 }

@@ -2,12 +2,14 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
     <f:entry>
-        <f:repeatable var="fileElement" items="${instance.fileInfo}">
+        <f:repeatable var="fileElement" items="${instance.fileInfo}" add="${%Add a file to monitor}">
             <table width="100%">
 
-                <f:entry field="fileName" title="${%File Name}"
-                         description="${%description.fileName('http://ant.apache.org/manual/Types/fileset.html')}">
-                    <f:textbox name="fileName" value="${fileElement.fileName}"/>
+                <f:entry field="filePattern"
+                         title="${%File Path}"
+                         description="${%description.filePattern('http://ant.apache.org/manual/Types/fileset.html')}">
+                    <f:textbox name="filePattern" value="${fileElement.filePattern}"
+                               checkUrl="'${rootURL}/trigger/FileNameTrigger/checkFile?value='+encodeURIComponent(this.value)"/>
                 </f:entry>
 
                 <f:advanced>
@@ -38,7 +40,9 @@
                             <f:block>
                                 <f:hetero-list name="contentFileTypes"
                                                descriptors="${descriptor.listFSTriggerFileNameDescriptors}"
-                                               items="${fileElement.contentFileTypes}"/>
+                                               items="${fileElement.contentFileTypes}"
+                                               addCaption="${%Add a content nature}"
+                                               deleteCaption="${%Delete nature}"/>
                                 <label class="attach-previous">${%Content nature to check}</label>
                             </f:block>
 

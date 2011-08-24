@@ -44,12 +44,6 @@ public class FileNameTrigger extends AbstractTrigger {
 
     private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
 
-//    private FileFoundInfo buildInfoObject(FileNameTriggerInfo info) {
-//        return new FileFoundInfo(
-//                info.getFileName(), info.getStrategy(), info.isDoNotCheckLastModificationDate()
-//        );
-//    }
-
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
         this.fileInfo = fileInfo;
@@ -63,10 +57,12 @@ public class FileNameTrigger extends AbstractTrigger {
     /**
      * Computes and gets the file to poll
      *
+     * @param fileInfo
      * @param startStage true if called in the starting stage
      * @return a FilePath object to the file, null if the object can't be determined or doesn't exist
      * @throws FSTriggerException
      */
+    @SuppressWarnings({"JavaDoc"})
     private FilePath computedFile(final FileNameTriggerInfo fileInfo, boolean startStage, final FSTriggerLog log) throws FSTriggerException {
 
         FilePath computedFile;
@@ -97,8 +93,8 @@ public class FileNameTrigger extends AbstractTrigger {
             enableOffLineInfo(startStage);
 
             //Go through each slave
-            for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-                node = it.next();
+            for (Node node1 : nodes) {
+                node = node1;
                 try {
                     FilePath nodePath = node.getRootPath();
                     // Is null if the slave is offline
@@ -169,8 +165,7 @@ public class FileNameTrigger extends AbstractTrigger {
             if (inspectingContentFile) {
                 FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
                 if (contentFileTypes != null) {
-                    for (int i = 0; i < contentFileTypes.length; i++) {
-                        final FSTriggerContentFileType type = contentFileTypes[i];
+                    for (final FSTriggerContentFileType type : contentFileTypes) {
                         final String jobName = job.getName();
                         if (type != null) {
                             try {
@@ -184,7 +179,7 @@ public class FileNameTrigger extends AbstractTrigger {
                                         return type.getMemoryInfo();
                                     }
                                 });
-                                contentFileTypes[i].setMemoryInfo(memoryInfo);
+                                type.setMemoryInfo(memoryInfo);
                             } catch (IOException ioe) {
                                 throw new FSTriggerException(ioe);
                             } catch (InterruptedException ie) {
@@ -201,10 +196,9 @@ public class FileNameTrigger extends AbstractTrigger {
     }
 
     private void refreshMemoryInfo(FileNameTriggerInfo info, FilePath newComputedFile) throws FSTriggerException {
-        FilePath resolvedFile = newComputedFile;
         try {
-            if (resolvedFile != null) {
-                info.setLastModifications(resolvedFile.lastModified());
+            if (newComputedFile != null) {
+                info.setLastModifications(newComputedFile.lastModified());
             } else {
                 info.setLastModifications(0l);
             }
@@ -348,23 +342,6 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-//        String[] subActionTitles = null;
-//        for (FileNameTriggerInfo info : fileInfo) {
-//            FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
-//            if (contentFileTypes != null) {
-//                subActionTitles = new String[contentFileTypes.length];
-//                for (int i = 0; i < contentFileTypes.length; i++) {
-//                    FSTriggerContentFileType fsTriggerContentFileType = contentFileTypes[i];
-//                    if (fsTriggerContentFileType != null) {
-//                        Descriptor<FSTriggerContentFileType> descriptor = fsTriggerContentFileType.getDescriptor();
-//                        if (descriptor instanceof FSTriggerContentFileTypeDescriptor) {
-//                            subActionTitles[i] = ((FSTriggerContentFileTypeDescriptor) descriptor).getLabel();
-//                        }
-//                    }
-//                }
-//            }
-//        }
-        //TODO subActions
         return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
     }
 
@@ -411,22 +388,28 @@ public class FileNameTrigger extends AbstractTrigger {
         /**
          * Performs syntax check.
          *
-         * @param folderPath the given user folder field
+         * @param value the file pattern
          * @return the form validation object
          */
-        public FormValidation doCheckFolderPath(@QueryParameter String folderPath) {
-            File folderFile = new File(folderPath);
-            if (!folderFile.exists()) {
-                String msg = String.format("The %s folder must exist.", folderPath);
-                return FormValidation.error(msg);
+        public FormValidation doCheckFile(@QueryParameter String value) {
+
+            if (value == null || value.trim().isEmpty()) {
+                return FormValidation.error("You must provide a file to monitor");
             }
+
+            value = value.replaceAll("[\t\r\n]+", " ");
+            value = value.trim();
+            if (value.length() < 2) {
+                return FormValidation.error("You must provide a folder.");
+            }
+
             return FormValidation.ok();
         }
 
         private FileNameTriggerInfo fillAndGetEntry(StaplerRequest req, JSONObject entryObject) {
 
             FileNameTriggerInfo info = new FileNameTriggerInfo();
-            info.setFileName(entryObject.getString("fileName"));
+            info.setFilePathPattern(entryObject.getString("filePattern"));
             info.setStrategy(entryObject.getString("strategy"));
 
             //InspectingContent info extracting
@@ -469,9 +452,8 @@ public class FileNameTrigger extends AbstractTrigger {
             } else {
                 JSONArray jsonArray = (JSONArray) entryObject;
                 if (jsonArray != null) {
-                    Iterator it = jsonArray.iterator();
-                    while (it.hasNext()) {
-                        entries.add(fillAndGetEntry(req, (JSONObject) it.next()));
+                    for (Object aJsonArray : jsonArray) {
+                        entries.add(fillAndGetEntry(req, (JSONObject) aJsonArray));
                     }
                 }
             }
@@ -546,16 +528,18 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @SuppressWarnings({"unused", "deprecation"})
     protected Object readResolve() throws ObjectStreamException {
-        super.readResolve();
+
+        //Previous version 0.11
         if (folderPath != null) {
             FileNameTriggerInfo info = new FileNameTriggerInfo();
-            info.setFileName(folderPath + File.separatorChar + fileName);
+            info.setFilePathPattern(folderPath + File.separatorChar + fileName);
             info.setStrategy(strategy);
             info.setInspectingContentFile(inspectingContentFile);
             info.setDoNotCheckLastModificationDate(doNotCheckLastModificationDate);
             info.setContentFileTypes(contentFileTypes);
             fileInfo = new FileNameTriggerInfo[]{info};
         }
+
         return this;
     }
 

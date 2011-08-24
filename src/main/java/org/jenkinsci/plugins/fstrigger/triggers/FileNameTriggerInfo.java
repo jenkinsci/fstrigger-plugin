@@ -10,7 +10,7 @@ import java.io.Serializable;
  */
 public class FileNameTriggerInfo implements Serializable {
 
-    private String fileName;
+    private String filePathPattern;
 
     private String strategy;
 
@@ -27,8 +27,8 @@ public class FileNameTriggerInfo implements Serializable {
      * Getters and setters
      */
     @SuppressWarnings("unused")
-    public String getFileName() {
-        return fileName;
+    public String getFilePathPattern() {
+        return filePathPattern;
     }
 
     @SuppressWarnings("unused")
@@ -51,8 +51,8 @@ public class FileNameTriggerInfo implements Serializable {
         return doNotCheckLastModificationDate;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setFilePathPattern(String filePathPattern) {
+        this.filePathPattern = filePathPattern;
     }
 
     public void setStrategy(String strategy) {
