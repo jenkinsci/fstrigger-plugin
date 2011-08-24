@@ -6,7 +6,6 @@ import hudson.FilePath;
 import hudson.Util;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
-import hudson.triggers.TriggerDescriptor;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
 import org.apache.tools.ant.types.FileSet;
@@ -352,7 +351,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel(), null));
+        return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
     }
 
     @Override

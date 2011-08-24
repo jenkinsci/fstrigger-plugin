@@ -43,7 +43,7 @@ public class FSTriggerFileNameCheckedModifiedService {
     }
 
     public Boolean checkFileName() throws FSTriggerException {
-        //If the new computed file has not be resolved, reset the memory
+
         if (newResolvedFile == null) {
             log.info("The computed file doesn't exist.");
             return false;
@@ -61,7 +61,6 @@ public class FSTriggerFileNameCheckedModifiedService {
             return true;
         }
 
-        //Checks the file date if needed
         if (!fileInfo.isDoNotCheckLastModificationDate() && (newResolvedFile.lastModified() != lastModifiedDate)) {
             log.info("The last modified date of the file '" + newResolvedFile + "' has changed.");
             return true;

@@ -112,7 +112,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 long start = System.currentTimeMillis();
                 log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
                 boolean changed = checkIfModified(log);
-                log.info("Polling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start));
+                log.info("\nPolling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start));
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
                     job.scheduleBuild(new FSTriggerCause(getCause()));

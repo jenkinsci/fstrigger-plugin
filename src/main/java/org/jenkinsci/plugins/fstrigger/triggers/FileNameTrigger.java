@@ -6,17 +6,16 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
-import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
 import net.sf.json.JSON;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameGetFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
@@ -25,6 +24,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,108 +42,23 @@ public class FileNameTrigger extends AbstractTrigger {
     private static Logger LOGGER = Logger.getLogger(FileNameTrigger.class.getName());
     private static final String CAUSE = "Triggered by a change to a file";
 
-    /**
-     * GUI fields
-     */
-    private String folderPath;
-    private String fileName;
-    private String strategy;
+    private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
 
-    private boolean inspectingContentFile;
-    private boolean doNotCheckLastModificationDate;
-    private FSTriggerContentFileType[] contentFileTypes;
+//    private FileFoundInfo buildInfoObject(FileNameTriggerInfo info) {
+//        return new FileFoundInfo(
+//                info.getFileName(), info.getStrategy(), info.isDoNotCheckLastModificationDate()
+//        );
+//    }
 
-    /**
-     * Memory field for detection
-     */
-    private transient FilePath resolvedFile;
-
-    private transient long resolvedFileLastModified;
-
-    /**
-     * Builds a FileNameTrigger object
-     * The instance is build by the JSON binding with the newInstance in {@link FileNameTriggerDescriptor}
-     */
-    public FileNameTrigger(String cronTabSpec) throws ANTLRException {
+    public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
-    }
-
-    /**
-     * Getters and setters
-     */
-    @SuppressWarnings("unused")
-    public String getFolderPath() {
-        return folderPath;
+        this.fileInfo = fileInfo;
     }
 
     @SuppressWarnings("unused")
-    public String getFileName() {
-        return fileName;
+    public FileNameTriggerInfo[] getFileInfo() {
+        return fileInfo;
     }
-
-    @SuppressWarnings("unused")
-    public String getStrategy() {
-        return strategy;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean isInspectingContentFile() {
-        return inspectingContentFile;
-    }
-
-    @SuppressWarnings("unused")
-    public FSTriggerContentFileType[] getContentFileTypes() {
-        return contentFileTypes;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean isDoNotCheckLastModificationDate() {
-        return doNotCheckLastModificationDate;
-    }
-
-    public void setFolderPath(String folderPath) {
-        this.folderPath = folderPath;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public void setStrategy(String strategy) {
-        this.strategy = strategy;
-    }
-
-    public void setInspectingContentFile(boolean inspectingContentFile) {
-        this.inspectingContentFile = inspectingContentFile;
-    }
-
-    public void setContentFileTypes(FSTriggerContentFileType[] contentFileTypes) {
-        this.contentFileTypes = contentFileTypes;
-    }
-
-    public void setDoNotCheckLastModificationDate(boolean doNotCheckLastModificationDate) {
-        this.doNotCheckLastModificationDate = doNotCheckLastModificationDate;
-    }
-
-    private FileNameTriggerInfo buildInfoObject() {
-        //Pre process GUI Fields
-        String folderPathProceed = folderPath;
-        if (folderPathProceed != null) {
-            folderPathProceed = folderPathProceed.replaceAll("[\t\r\n]+", " ");
-        }
-        String fileNameProceed = fileName;
-        if (fileNameProceed != null) {
-            fileNameProceed = fileNameProceed.replaceAll("[\t\r\n]+", " ");
-        }
-
-        return new FileNameTriggerInfo(
-                folderPathProceed,
-                fileNameProceed,
-                strategy,
-                doNotCheckLastModificationDate
-        );
-    }
-
 
     /**
      * Computes and gets the file to poll
@@ -152,7 +67,7 @@ public class FileNameTrigger extends AbstractTrigger {
      * @return a FilePath object to the file, null if the object can't be determined or doesn't exist
      * @throws FSTriggerException
      */
-    private FilePath computedFile(final FSTriggerLog log, boolean startStage) throws FSTriggerException {
+    private FilePath computedFile(final FileNameTriggerInfo fileInfo, boolean startStage, final FSTriggerLog log) throws FSTriggerException {
 
         FilePath computedFile;
 
@@ -161,7 +76,7 @@ public class FileNameTrigger extends AbstractTrigger {
 
         //Compute the file to the master
         if (label == null) {
-            File file = new FSTriggerFileNameGetFileService(log, buildInfoObject()).call();
+            File file = new FSTriggerFileNameGetFileService(fileInfo, log).call();
             if (file != null) {
                 computedFile = new FilePath(Hudson.MasterComputer.localChannel, file.getPath());
             } else {
@@ -191,7 +106,7 @@ public class FileNameTrigger extends AbstractTrigger {
                         file = nodePath.act(new FilePath.FileCallable<File>() {
                             public File invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                                 try {
-                                    return new FSTriggerFileNameGetFileService(log, buildInfoObject()).call();
+                                    return new FSTriggerFileNameGetFileService(fileInfo, log).call();
                                 } catch (FSTriggerException fse) {
                                     throw new RuntimeException(fse);
                                 }
@@ -226,14 +141,16 @@ public class FileNameTrigger extends AbstractTrigger {
 
         super.start(project, newInstance);
         try {
-            //Compute the file
-            resolvedFile = computedFile(new FSTriggerLog(), true);
-            if (resolvedFile != null) {
-                resolvedFileLastModified = resolvedFile.lastModified();
-            }
+            for (FileNameTriggerInfo info : fileInfo) {
+                FilePath resolvedFile = computedFile(info, true, new FSTriggerLog());
+                if (resolvedFile != null) {
+                    info.setResolvedFile(resolvedFile);
+                    info.setLastModifications(resolvedFile.lastModified());
+                }
 
-            // Initialize the memory information if whe introspect the content
-            initContentElementsIfNeed();
+                // Initialize the memory information if whe introspect the content
+                initContentElementsIfNeed(info);
+            }
 
         } catch (FSTriggerException fse) {
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
@@ -244,9 +161,13 @@ public class FileNameTrigger extends AbstractTrigger {
         }
     }
 
-    private void initContentElementsIfNeed() throws FSTriggerException {
+    private void initContentElementsIfNeed(FileNameTriggerInfo info) throws FSTriggerException {
+
+        FilePath resolvedFile = info.getResolvedFile();
         if (resolvedFile != null) {
+            boolean inspectingContentFile = info.isInspectingContentFile();
             if (inspectingContentFile) {
+                FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
                 if (contentFileTypes != null) {
                     for (int i = 0; i < contentFileTypes.length; i++) {
                         final FSTriggerContentFileType type = contentFileTypes[i];
@@ -276,61 +197,68 @@ public class FileNameTrigger extends AbstractTrigger {
                 }
             }
         }
+
     }
 
-    private void refreshMemoryInfo(FilePath newComputedFile) throws FSTriggerException {
-        resolvedFile = newComputedFile;
+    private void refreshMemoryInfo(FileNameTriggerInfo info, FilePath newComputedFile) throws FSTriggerException {
+        FilePath resolvedFile = newComputedFile;
         try {
             if (resolvedFile != null) {
-                resolvedFileLastModified = resolvedFile.lastModified();
+                info.setLastModifications(resolvedFile.lastModified());
             } else {
-                resolvedFileLastModified = 0l;
+                info.setLastModifications(0l);
             }
         } catch (IOException ioe) {
             throw new FSTriggerException(ioe);
         } catch (InterruptedException ie) {
             throw new FSTriggerException(ie);
         }
-        initContentElementsIfNeed();
+        initContentElementsIfNeed(info);
     }
 
 
     @Override
     protected boolean checkIfModified(final FSTriggerLog log) throws FSTriggerException {
 
-        //Get the new resolved file
-        FilePath newResolvedFile = computedFile(log, false);
+        for (FileNameTriggerInfo info : fileInfo) {
 
-        // Checks if slaves were offline at startup
-        if (offlineSlavesForStartingStage) {
-            //Refresh the memory field and reset offline info only if the new computed file was on active slaves (or no slaves)
-            if (!offlineSlavesForCheckingStage) {
-                log.info("The job is attached to a slave but the slave was started after the master and was offline during the check. Waiting for the next trigger schedule.");
-                //Set the memory file to the new computed file
-                refreshMemoryInfo(newResolvedFile);
-                //Disable slave information for starting stage and checking stage
-                disableOffLineInfo(true);
-            } else {
-                log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
+            //Get the new resolved file
+            FilePath newResolvedFile = computedFile(info, false, log);
+
+            // Checks if slaves were offline at startup
+            if (offlineSlavesForStartingStage) {
+                //Refresh the memory field and reset offline info only if the new computed file was on active slaves (or no slaves)
+                if (!offlineSlavesForCheckingStage) {
+                    log.info("The job is attached to a slave but the slave was started after the master and was offline during the check. Waiting for the next trigger schedule.");
+                    //Set the memory file to the new computed file
+                    refreshMemoryInfo(info, newResolvedFile);
+                    //Disable slave information for starting stage and checking stage
+                    disableOffLineInfo(true);
+                } else {
+                    log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
+                }
+
+                return false;
             }
 
-            return false;
-        }
+            // Check if the new file was computed with slaves on offline (no startup)
+            if (!offlineSlavesForStartingStage && offlineSlavesForCheckingStage) {
+                log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
+                //Reset offline slave information for compute stage
+                disableOffLineInfo(false);
+                return false;
+            }
 
-        // Check if the new file was computed with slaves on offline (no startup)
-        if (!offlineSlavesForStartingStage && offlineSlavesForCheckingStage) {
-            log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
-            //Reset offline slave information for compute stage
-            disableOffLineInfo(false);
-            return false;
+            boolean changed = checkIfModifiedFile(newResolvedFile, info, log);
+            refreshMemoryInfo(info, newResolvedFile);
+            if (changed) {
+                return true;
+            }
         }
-
-        boolean changed = checkIfModifiedFile(log, newResolvedFile);
-        refreshMemoryInfo(newResolvedFile);
-        return changed;
+        return false;
     }
 
-    private boolean checkIfModifiedFile(final FSTriggerLog log, FilePath newResolvedFile) throws FSTriggerException {
+    private boolean checkIfModifiedFile(FilePath newResolvedFile, final FileNameTriggerInfo info, final FSTriggerLog log) throws FSTriggerException {
 
         // Do not trigger a build if the new computed file doesn't exist.
         if (newResolvedFile == null) {
@@ -339,11 +267,13 @@ public class FileNameTrigger extends AbstractTrigger {
         }
 
         try {
+            FilePath resolvedFile = info.getResolvedFile();
+            final Long lastModification = info.getLastModifications();
             final String resolvedFilePath = (resolvedFile != null) ? resolvedFile.getRemote() : null;
             boolean changedFileName = newResolvedFile.act(new FilePath.FileCallable<Boolean>() {
                 public Boolean invoke(File newResolvedFile, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
-                        FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, buildInfoObject(), resolvedFilePath, new Long(resolvedFileLastModified), newResolvedFile);
+                        FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, info, resolvedFilePath, lastModification, newResolvedFile);
                         return service.checkFileName();
                     } catch (FSTriggerException fse) {
                         throw new RuntimeException(fse);
@@ -355,6 +285,8 @@ public class FileNameTrigger extends AbstractTrigger {
                 return true;
             }
 
+            boolean inspectingContentFile = info.isInspectingContentFile();
+            FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
             if (inspectingContentFile) {
                 log.info("Inspecting the contents of '" + newResolvedFile + "'");
                 for (final FSTriggerContentFileType type : contentFileTypes) {
@@ -363,7 +295,7 @@ public class FileNameTrigger extends AbstractTrigger {
                         public Boolean invoke(File newResolvedFile, VirtualChannel channel) throws IOException, InterruptedException {
                             boolean isTriggered;
                             try {
-                                FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, buildInfoObject(), resolvedFilePath, new Long(resolvedFileLastModified), newResolvedFile);
+                                FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, info, resolvedFilePath, lastModification, newResolvedFile);
                                 type.setMemoryInfo(memoryObject);
                                 isTriggered = service.checkContentType(type);
                             } catch (FSTriggerException fse) {
@@ -416,20 +348,24 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        String[] subActionTitles = null;
-        if (contentFileTypes != null) {
-            subActionTitles = new String[contentFileTypes.length];
-            for (int i = 0; i < contentFileTypes.length; i++) {
-                FSTriggerContentFileType fsTriggerContentFileType = contentFileTypes[i];
-                if (fsTriggerContentFileType != null) {
-                    Descriptor<FSTriggerContentFileType> descriptor = fsTriggerContentFileType.getDescriptor();
-                    if (descriptor instanceof FSTriggerContentFileTypeDescriptor) {
-                        subActionTitles[i] = ((FSTriggerContentFileTypeDescriptor) descriptor).getLabel();
-                    }
-                }
-            }
-        }
-        return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel(), subActionTitles));
+//        String[] subActionTitles = null;
+//        for (FileNameTriggerInfo info : fileInfo) {
+//            FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
+//            if (contentFileTypes != null) {
+//                subActionTitles = new String[contentFileTypes.length];
+//                for (int i = 0; i < contentFileTypes.length; i++) {
+//                    FSTriggerContentFileType fsTriggerContentFileType = contentFileTypes[i];
+//                    if (fsTriggerContentFileType != null) {
+//                        Descriptor<FSTriggerContentFileType> descriptor = fsTriggerContentFileType.getDescriptor();
+//                        if (descriptor instanceof FSTriggerContentFileTypeDescriptor) {
+//                            subActionTitles[i] = ((FSTriggerContentFileTypeDescriptor) descriptor).getLabel();
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        //TODO subActions
+        return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
     }
 
     @Override
@@ -487,32 +423,24 @@ public class FileNameTrigger extends AbstractTrigger {
             return FormValidation.ok();
         }
 
-        @Override
-        public FileNameTrigger newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        private FileNameTriggerInfo fillAndGetEntry(StaplerRequest req, JSONObject entryObject) {
 
-            FileNameTrigger fileNameTrigger;
-            try {
-                fileNameTrigger = new FileNameTrigger(formData.getString("cronTabSpec"));
-            } catch (ANTLRException ae) {
-                throw new FormException(ae, "cronTabSpec");
-            }
-
-            fileNameTrigger.setFolderPath(formData.getString("folderPath"));
-            fileNameTrigger.setFileName(formData.getString("fileName"));
-            fileNameTrigger.setStrategy(formData.getString("strategy"));
+            FileNameTriggerInfo info = new FileNameTriggerInfo();
+            info.setFileName(entryObject.getString("fileName"));
+            info.setStrategy(entryObject.getString("strategy"));
 
             //InspectingContent info extracting
-            Object inspectingFileContentObject = formData.get("inspectingContentFile");
+            Object inspectingFileContentObject = entryObject.get("inspectingContentFile");
             if (inspectingFileContentObject == null) {
-                fileNameTrigger.setInspectingContentFile(false);
+                info.setInspectingContentFile(false);
                 //If we don't inspect the content, we inspect the last modification date
-                fileNameTrigger.setDoNotCheckLastModificationDate(false);
-                fileNameTrigger.setContentFileTypes(new FSTriggerContentFileType[0]);
+                info.setDoNotCheckLastModificationDate(false);
+                info.setContentFileTypes(new FSTriggerContentFileType[0]);
             } else {
-                JSONObject inspectingFileContentJSONObject = formData.getJSONObject("inspectingContentFile");
-                fileNameTrigger.setInspectingContentFile(true);
+                JSONObject inspectingFileContentJSONObject = entryObject.getJSONObject("inspectingContentFile");
+                info.setInspectingContentFile(true);
                 //Get the no checked last modified date
-                fileNameTrigger.setDoNotCheckLastModificationDate(inspectingFileContentJSONObject.getBoolean("doNotCheckLastModificationDate"));
+                info.setDoNotCheckLastModificationDate(inspectingFileContentJSONObject.getBoolean("doNotCheckLastModificationDate"));
                 //Content Types
                 JSON contentFileTypesJsonElt;
                 try {
@@ -521,11 +449,114 @@ public class FileNameTrigger extends AbstractTrigger {
                     contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONObject("contentFileTypes");
                 }
                 List<FSTriggerContentFileType> types = req.bindJSONToList(FSTriggerContentFileType.class, contentFileTypesJsonElt);
-                fileNameTrigger.setContentFileTypes(types.toArray(new FSTriggerContentFileType[types.size()]));
+                info.setContentFileTypes(types.toArray(new FSTriggerContentFileType[types.size()]));
             }
 
-            return fileNameTrigger;
+            return info;
+
         }
+
+        @Override
+        public FileNameTrigger newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+
+            FileNameTrigger fileNameTrigger;
+            String cronTab = formData.getString("cronTabSpec");
+            Object entryObject = formData.get("fileElement");
+
+            List<FileNameTriggerInfo> entries = new ArrayList<FileNameTriggerInfo>();
+            if (entryObject instanceof JSONObject) {
+                entries.add(fillAndGetEntry(req, (JSONObject) entryObject));
+            } else {
+                JSONArray jsonArray = (JSONArray) entryObject;
+                if (jsonArray != null) {
+                    Iterator it = jsonArray.iterator();
+                    while (it.hasNext()) {
+                        entries.add(fillAndGetEntry(req, (JSONObject) it.next()));
+                    }
+                }
+            }
+
+            try {
+                return new FileNameTrigger(cronTab, entries.toArray(new FileNameTriggerInfo[entries.size()]));
+
+            } catch (ANTLRException ae) {
+                throw new FormException(ae, "cronTabSpec");
+            }
+
+        }
+    }
+
+    /**
+     * Backward compatibility
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient String folderPath;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient String fileName;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient String strategy;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient boolean inspectingContentFile;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient boolean doNotCheckLastModificationDate;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient FSTriggerContentFileType[] contentFileTypes;
+
+    @SuppressWarnings({"unused", "deprecation"})
+    @Deprecated
+    public String getFolderPath() {
+        return folderPath;
+    }
+
+    @SuppressWarnings({"unused", "deprecation"})
+    @Deprecated
+    public String getFileName() {
+        return fileName;
+    }
+
+    @SuppressWarnings({"unused", "deprecation"})
+    @Deprecated
+    public String getStrategy() {
+        return strategy;
+    }
+
+    @SuppressWarnings({"unused", "deprecation"})
+    @Deprecated
+    public boolean isInspectingContentFile() {
+        return inspectingContentFile;
+    }
+
+    @SuppressWarnings({"unused", "deprecation"})
+    @Deprecated
+    public boolean isDoNotCheckLastModificationDate() {
+        return doNotCheckLastModificationDate;
+    }
+
+    @SuppressWarnings({"unused", "deprecation"})
+    @Deprecated
+    public FSTriggerContentFileType[] getContentFileTypes() {
+        return contentFileTypes;
+    }
+
+    @SuppressWarnings({"unused", "deprecation"})
+    protected Object readResolve() throws ObjectStreamException {
+        super.readResolve();
+        if (folderPath != null) {
+            FileNameTriggerInfo info = new FileNameTriggerInfo();
+            info.setFileName(folderPath + File.separatorChar + fileName);
+            info.setStrategy(strategy);
+            info.setInspectingContentFile(inspectingContentFile);
+            info.setDoNotCheckLastModificationDate(doNotCheckLastModificationDate);
+            info.setContentFileTypes(contentFileTypes);
+            fileInfo = new FileNameTriggerInfo[]{info};
+        }
+        return this;
     }
 
 }

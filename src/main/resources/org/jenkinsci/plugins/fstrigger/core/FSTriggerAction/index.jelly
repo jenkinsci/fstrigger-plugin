@@ -27,11 +27,15 @@ THE SOFTWARE.
     <st:include it="${it.owner}" page="sidepanel.jelly" />
     <l:main-panel>
       <h1>${it.actionTitle}</h1>
+      <!--
+      <h1>${it.actionTitle}</h1>
       <f:repeatable var="subAction" items="${it.subActionTitle}" noAddButton="true">
          <br/>
          <b>${subAction}</b>
          <br/>
       </f:repeatable>
+      -->
+
       <br/>
       <br/>
       <j:set var="log" value="${it.log}" />
