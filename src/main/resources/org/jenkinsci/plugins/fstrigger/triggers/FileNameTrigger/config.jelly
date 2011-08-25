@@ -2,7 +2,7 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
     <f:entry>
-        <f:repeatable var="fileElement" items="${instance.fileInfo}" add="${%Add a file to monitor}">
+        <f:repeatable var="fileElement" items="${instance.fileInfo}" add="${%Add file to monitor}">
             <table width="100%">
 
                 <f:entry field="filePathPattern"
@@ -43,7 +43,6 @@
                                                items="${fileElement.contentFileTypes}"
                                                addCaption="${%Add a content nature}"
                                                deleteCaption="${%Delete nature}"/>
-                                <label class="attach-previous">${%Content nature to check}</label>
                             </f:block>
 
                         </f:optionalBlock>

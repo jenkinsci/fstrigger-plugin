@@ -65,7 +65,7 @@ public class FSTriggerFileNameGetFileService {
 
         if (fileSet.size() == 1) {
             File file = ((FileResource) fileSet.iterator().next()).getFile();
-            log.info(String.format("Inspecting the  file '%s'", file));
+            log.info(String.format("Inspecting the file '%s'", file));
             return file;
         }
 
@@ -73,12 +73,12 @@ public class FSTriggerFileNameGetFileService {
 
             log.info(String.format("There is more than one file for the file pattern '%s'.", fileInfo.getFilePathPattern()));
             if (FileNameTrigger.STRATEGY_IGNORE.equals(fileInfo.getStrategy())) {
-                log.info("Regarding the checked strategy, the schedule has been ignored.");
+                log.info("According to the checked strategy, the schedule has been ignored.");
                 return null;
             }
 
             if (FileNameTrigger.STRATEGY_LATEST.equals(fileInfo.getStrategy())) {
-                log.info("Regarding the checked strategy, the latest modified file has been selected for the polling.");
+                log.info("According to the checked strategy, the latest modified file has been selected for the polling.");
                 File lastModifiedFile = null;
                 for (Iterator it = fileSet.iterator(); it.hasNext();) {
                     FileResource fileResource = (FileResource) it.next();

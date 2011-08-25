@@ -76,7 +76,7 @@ public class FSTriggerComputeFileService implements Serializable {
             File file = computeFileNode(node, fileInfo, log);
             //We stop when the file exists on the slave
             if (file != null) {
-                log.info(String.format("The file was found on the slave '%s'", node.getNodeName()));
+                log.info("The file is found.");
                 return new FilePath(node.getChannel(), file.getPath());
             }
         }
