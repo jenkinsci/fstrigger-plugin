@@ -5,10 +5,10 @@
         <f:repeatable var="fileElement" items="${instance.fileInfo}" add="${%Add a file to monitor}">
             <table width="100%">
 
-                <f:entry field="filePattern"
+                <f:entry field="filePathPattern"
                          title="${%File Path}"
                          description="${%description.filePattern('http://ant.apache.org/manual/Types/fileset.html')}">
-                    <f:textbox name="filePattern" value="${fileElement.filePattern}"
+                    <f:textbox name="filePathPattern" value="${fileElement.filePathPattern}"
                                checkUrl="'${rootURL}/trigger/FileNameTrigger/checkFile?value='+encodeURIComponent(this.value)"/>
                 </f:entry>
 

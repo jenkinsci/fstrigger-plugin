@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.triggers;
 
 import antlr.ANTLRException;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
@@ -50,9 +51,9 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     @DataBoundConstructor
     public FolderContentTrigger(String cronTabSpec, String path, String includes, String excludes) throws ANTLRException {
         super(cronTabSpec);
-        this.path = path;
-        this.includes = includes;
-        this.excludes = excludes;
+        this.path = Util.fixEmpty(path);
+        this.includes = Util.fixEmpty(includes);
+        this.excludes = Util.fixEmpty(excludes);
     }
 
     @SuppressWarnings("unused")
@@ -95,8 +96,8 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
     }
 
-    private void refreshMemoryInfo(boolean startStage) throws FSTriggerException {
-        md5Map = getMd5Map(startStage);
+    private void refreshMemoryInfo(boolean startStage, FSTriggerLog log) throws FSTriggerException {
+        md5Map = getMd5Map(startStage, log);
     }
 
     private void refreshMemoryInfo(Map<String, FileInfo> newMd5Map) throws FSTriggerException {
@@ -110,55 +111,82 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
      * @return the file of the folder information
      * @throws FSTriggerException
      */
-    private Map<String, FileInfo> getMd5Map(boolean startingStage) throws FSTriggerException {
-        Map<String, FileInfo> result = null;
-        AbstractProject p = (AbstractProject) job;
-        Label label = p.getAssignedLabel();
+    private Map<String, FileInfo> getMd5Map(boolean startingStage, FSTriggerLog log) throws FSTriggerException {
+
+        if (path == null) {
+            log.info("A folder path must be set.");
+            return null;
+        }
+
+        Label label = ((AbstractProject) job).getAssignedLabel();
         if (label == null) {
-            result = getFileInfo(path, includes, excludes);
-            //When there is no slave, disable offline information
-            disableOffLineInfo(startingStage);
+            log.info("Polling on the master");
+            return getFileInfoMaster(log);
+        }
 
-        } else {
+        log.info(String.format("Polling on all nodes for the label '%s' attached to the job.", label));
 
-            //Enables offline info
-            enableOffLineInfo(startingStage);
+        if (isOfflineNodes()) {
+            log.info("All slaves are offline.");
+            if (startingStage) {
+                offlineSlaveOnStartup = true;
+            }
+            return null;
+        }
 
-            Set<Node> nodes = label.getNodes();
-            Node node;
-            for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-                node = it.next();
-                FilePath nodePath = node.getRootPath();
-                if (nodePath != null) {
-                    currentSlave = nodePath;
-                    try {
-                        result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
-                            public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
-                                try {
-                                    return getFileInfo(path, includes, excludes);
-                                } catch (FSTriggerException fse) {
-                                    throw new RuntimeException(fse);
-                                }
+        return getFileInfoLabel(label, log);
+    }
+
+    private Map<String, FileInfo> getFileInfoMaster(FSTriggerLog log) throws FSTriggerException {
+
+        String pathResolved = Util.replaceMacro(path, EnvVars.masterEnvVars);
+        String includesResolved = Util.replaceMacro(includes, EnvVars.masterEnvVars);
+        String excludesResolved = Util.replaceMacro(excludes, EnvVars.masterEnvVars);
+
+        return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
+    }
+
+    private Map<String, FileInfo> getFileInfoLabel(Label label, final FSTriggerLog log) throws FSTriggerException {
+
+        Set<Node> nodes = label.getNodes();
+        Node node;
+
+        Map<String, FileInfo> result;
+        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
+            node = it.next();
+            FilePath nodePath = node.getRootPath();
+            if (nodePath != null) {
+                currentSlave = nodePath;
+                try {
+                    result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
+                        public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
+                            try {
+                                String pathResolved = Util.replaceMacro(path, EnvVars.masterEnvVars);
+                                String includesResolved = Util.replaceMacro(includes, EnvVars.masterEnvVars);
+                                String excludesResolved = Util.replaceMacro(excludes, EnvVars.masterEnvVars);
+                                return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
+                            } catch (FSTriggerException fse) {
+                                throw new RuntimeException(fse);
                             }
-                        });
-                    } catch (Throwable t) {
-                        throw new FSTriggerException(t);
-                    }
+                        }
+                    });
+                } catch (Throwable t) {
+                    throw new FSTriggerException(t);
+                }
 
-                    //We stop at first slave with file information
-                    if (result != null) {
-                        disableOffLineInfo(startingStage);
-                        break;
-                    }
+                //We stop at first slave with file information
+                if (result != null) {
+                    return result;
                 }
             }
         }
 
-        return result;
+        return null;
     }
 
+    private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes, FSTriggerLog log) throws FSTriggerException {
 
-    private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes) throws FSTriggerException {
+        log.info(String.format("\nTrying to monitor the folder '%s'", path));
 
         File folder = new File(path);
         if (!folder.exists()) {
@@ -168,7 +196,6 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         if (!folder.isDirectory()) {
             return null;
         }
-
 
         Map<String, FileInfo> result = new HashMap<String, FileInfo>();
         FileSet fileSet = Util.createFileSet(new File(path), includes, excludes);
@@ -200,28 +227,12 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     protected synchronized boolean checkIfModified(final FSTriggerLog log) throws FSTriggerException {
 
         //Get the current information
-        Map<String, FileInfo> newMd5Map = getMd5Map(false);
+        Map<String, FileInfo> newMd5Map = getMd5Map(false, log);
 
-        // Checks if slaves were offline at startup
-        if (offlineSlavesForStartingStage) {
-            //Refresh the memory field and reset offline info only if the new computed file was on active slaves (or no slaves)
-            if (!offlineSlavesForCheckingStage) {
-                log.info("The job is attached to a slave but the slave was started after the master and was offline during the check. Waiting for the next trigger schedule.");
-                //Set the origin file to the new computed map
-                refreshMemoryInfo(newMd5Map);
-                //Disable slave information for starting stage and checking stage
-                disableOffLineInfo(true);
-            } else {
-                log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
-            }
-
-            return false;
-        }
-
-        if (!offlineSlavesForStartingStage && offlineSlavesForCheckingStage) {
-            log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
-            //Reset offline slave information for compute stage
-            disableOffLineInfo(false);
+        if (offlineSlaveOnStartup) {
+            refreshMemoryInfo(newMd5Map);
+            log.info("Slave(s) were offline at startup. Waiting for next schedule to check if there are modifications.");
+            offlineSlaveOnStartup = false;
             return false;
         }
 
@@ -323,13 +334,12 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
          */
         try {
             initInfo(project.getName());
-            refreshMemoryInfo(true);
+            refreshMemoryInfo(true, new FSTriggerLog());
         } catch (FSTriggerException fse) {
             //Log the exception
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
             fse.printStackTrace();
         }
-
     }
 
 

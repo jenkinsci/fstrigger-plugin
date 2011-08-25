@@ -2,7 +2,9 @@ package org.jenkinsci.plugins.fstrigger.triggers;
 
 import antlr.ANTLRException;
 import hudson.Util;
+import hudson.model.AbstractProject;
 import hudson.model.BuildableItem;
+import hudson.model.Label;
 import hudson.triggers.Trigger;
 import org.jenkinsci.plugins.fstrigger.FSTriggerCause;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
@@ -19,18 +21,8 @@ import java.util.Date;
  */
 public abstract class AbstractTrigger extends Trigger<BuildableItem> implements Serializable {
 
-    /**
-     * Set to true if the starting stage was called when
-     * the slave job was offline.
-     */
-    protected transient boolean offlineSlavesForStartingStage;
 
-    /**
-     * Set to true if the check stage was called when
-     * the slave job was offline.
-     */
-    protected transient boolean offlineSlavesForCheckingStage;
-
+    protected transient boolean offlineSlaveOnStartup;
 
     /**
      * Builds a trigger object
@@ -61,39 +53,12 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      */
     protected abstract boolean checkIfModified(FSTriggerLog log) throws FSTriggerException;
 
-
     /**
      * Gets the trigger cause
      *
      * @return the trigger cause
      */
     public abstract String getCause();
-
-
-    private void setOffLineInfo(boolean startStage, boolean value) {
-        if (startStage) {
-            offlineSlavesForStartingStage = value;
-        }
-        offlineSlavesForCheckingStage = value;
-    }
-
-    /**
-     * Resets the information about offline slave
-     *
-     * @param startStage
-     */
-    protected void disableOffLineInfo(boolean startStage) {
-        setOffLineInfo(startStage, false);
-    }
-
-    /**
-     * Enables the information about offline slave
-     *
-     * @param startStage
-     */
-    protected void enableOffLineInfo(boolean startStage) {
-        setOffLineInfo(startStage, true);
-    }
 
     /**
      * Asynchronous task
@@ -126,6 +91,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 log.error("SEVERE - Polling error " + e.getMessage());
             }
         }
+    }
+
+    protected boolean isOfflineNodes() {
+        Label label = ((AbstractProject) job).getAssignedLabel();
+        if (label == null) {
+            return false;
+        }
+        return label.isOffline();
     }
 
 }

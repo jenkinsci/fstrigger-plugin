@@ -4,6 +4,7 @@ import antlr.ANTLRException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Util;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
@@ -16,8 +17,8 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
+import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameGetFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -25,7 +26,10 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectStreamException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -54,98 +58,24 @@ public class FileNameTrigger extends AbstractTrigger {
         return fileInfo;
     }
 
-    /**
-     * Computes and gets the file to poll
-     *
-     * @param fileInfo
-     * @param startStage true if called in the starting stage
-     * @return a FilePath object to the file, null if the object can't be determined or doesn't exist
-     * @throws FSTriggerException
-     */
-    @SuppressWarnings({"JavaDoc"})
-    private FilePath computedFile(final FileNameTriggerInfo fileInfo, boolean startStage, final FSTriggerLog log) throws FSTriggerException {
-
-        FilePath computedFile;
-
-        AbstractProject p = (AbstractProject) job;
-        Label label = p.getAssignedLabel();
-
-        //Compute the file to the master
-        if (label == null) {
-            File file = new FSTriggerFileNameGetFileService(fileInfo, log).call();
-            if (file != null) {
-                computedFile = new FilePath(Hudson.MasterComputer.localChannel, file.getPath());
-            } else {
-                computedFile = null;
-            }
-
-            //Disable offline information of slaves
-            disableOffLineInfo(startStage);
-
-        }
-        // Monitor the fill from a job slave
-        else {
-            Set<Node> nodes = label.getNodes();
-            File file = null;
-            Node node = null;
-
-            //Enable offline info (and disable after if needed)
-            enableOffLineInfo(startStage);
-
-            //Go through each slave
-            for (Node node1 : nodes) {
-                node = node1;
-                try {
-                    FilePath nodePath = node.getRootPath();
-                    // Is null if the slave is offline
-                    if (nodePath != null) {
-                        file = nodePath.act(new FilePath.FileCallable<File>() {
-                            public File invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-                                try {
-                                    return new FSTriggerFileNameGetFileService(fileInfo, log).call();
-                                } catch (FSTriggerException fse) {
-                                    throw new RuntimeException(fse);
-                                }
-                            }
-                        });
-                    }
-                } catch (IOException e) {
-                    throw new FSTriggerException(e);
-                } catch (InterruptedException e) {
-                    throw new FSTriggerException(e);
-                }
-
-                //We stop when the file exists on the slave
-                if (file != null) {
-                    disableOffLineInfo(startStage);
-                    break;
-                }
-            }
-
-            if (file != null) {
-                computedFile = new FilePath(node.getChannel(), file.getPath());
-            } else {
-                computedFile = null;
-            }
-        }
-
-        return computedFile;
-    }
-
     @Override
     public void start(BuildableItem project, boolean newInstance) {
 
         super.start(project, newInstance);
         try {
+            FSTriggerComputeFileService service = FSTriggerComputeFileService.getInstance();
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = computedFile(info, true, new FSTriggerLog());
+                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new FSTriggerLog());
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());
+                    // Initialize the memory information if whe introspect the content
+                    initContentElementsIfNeed(info);
+                } else {
+                    if (isOfflineNodes()) {
+                        offlineSlaveOnStartup = true;
+                    }
                 }
-
-                // Initialize the memory information if whe introspect the content
-                initContentElementsIfNeed(info);
             }
 
         } catch (FSTriggerException fse) {
@@ -192,14 +122,16 @@ public class FileNameTrigger extends AbstractTrigger {
                 }
             }
         }
-
     }
 
     private void refreshMemoryInfo(FileNameTriggerInfo info, FilePath newComputedFile) throws FSTriggerException {
         try {
-            if (newComputedFile != null) {
+            if (newComputedFile != null && newComputedFile.exists()) {
+                info.setResolvedFile(newComputedFile);
                 info.setLastModifications(newComputedFile.lastModified());
+                initContentElementsIfNeed(info);
             } else {
+                info.setResolvedFile(null);
                 info.setLastModifications(0l);
             }
         } catch (IOException ioe) {
@@ -207,7 +139,7 @@ public class FileNameTrigger extends AbstractTrigger {
         } catch (InterruptedException ie) {
             throw new FSTriggerException(ie);
         }
-        initContentElementsIfNeed(info);
+
     }
 
 
@@ -216,31 +148,13 @@ public class FileNameTrigger extends AbstractTrigger {
 
         for (FileNameTriggerInfo info : fileInfo) {
 
-            //Get the new resolved file
-            FilePath newResolvedFile = computedFile(info, false, log);
+            FilePath newResolvedFile = FSTriggerComputeFileService.getInstance().computedFile((AbstractProject) job, info, log);
 
-            // Checks if slaves were offline at startup
-            if (offlineSlavesForStartingStage) {
-                //Refresh the memory field and reset offline info only if the new computed file was on active slaves (or no slaves)
-                if (!offlineSlavesForCheckingStage) {
-                    log.info("The job is attached to a slave but the slave was started after the master and was offline during the check. Waiting for the next trigger schedule.");
-                    //Set the memory file to the new computed file
-                    refreshMemoryInfo(info, newResolvedFile);
-                    //Disable slave information for starting stage and checking stage
-                    disableOffLineInfo(true);
-                } else {
-                    log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
-                }
-
-                return false;
-            }
-
-            // Check if the new file was computed with slaves on offline (no startup)
-            if (!offlineSlavesForStartingStage && offlineSlavesForCheckingStage) {
-                log.info("The job is attached to a slave but the slave is offline. Waiting for the next trigger schedule.");
-                //Reset offline slave information for compute stage
-                disableOffLineInfo(false);
-                return false;
+            if (offlineSlaveOnStartup) {
+                log.info("Slave(s) were offline at startup. Waiting for next schedule to check if there are modifications.");
+                offlineSlaveOnStartup = false;
+                refreshMemoryInfo(info, newResolvedFile);
+                continue;
             }
 
             boolean changed = checkIfModifiedFile(newResolvedFile, info, log);
@@ -409,7 +323,7 @@ public class FileNameTrigger extends AbstractTrigger {
         private FileNameTriggerInfo fillAndGetEntry(StaplerRequest req, JSONObject entryObject) {
 
             FileNameTriggerInfo info = new FileNameTriggerInfo();
-            info.setFilePathPattern(entryObject.getString("filePattern"));
+            info.setFilePathPattern(Util.fixEmpty(entryObject.getString("filePathPattern")));
             info.setStrategy(entryObject.getString("strategy"));
 
             //InspectingContent info extracting
@@ -528,6 +442,9 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @SuppressWarnings({"unused", "deprecation"})
     protected Object readResolve() throws ObjectStreamException {
+
+        //Call Trigger readResolver to set tab field
+        super.readResolve();
 
         //Previous version 0.11
         if (folderPath != null) {

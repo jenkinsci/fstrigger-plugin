@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import hudson.Util;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -13,7 +14,7 @@ public class XMLFileContentEntry implements Serializable {
 
     @DataBoundConstructor
     public XMLFileContentEntry(String expression) {
-        this.expression = expression;
+        this.expression = Util.fixEmpty(expression);
     }
 
     @SuppressWarnings("unused")

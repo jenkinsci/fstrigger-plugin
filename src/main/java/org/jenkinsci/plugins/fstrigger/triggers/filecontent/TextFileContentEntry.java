@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import hudson.Util;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -13,7 +14,7 @@ public class TextFileContentEntry implements Serializable {
 
     @DataBoundConstructor
     public TextFileContentEntry(String regex) {
-        this.regex = regex;
+        this.regex = Util.fixEmpty(regex);
     }
 
     @SuppressWarnings("unused")

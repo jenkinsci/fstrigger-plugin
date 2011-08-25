@@ -43,7 +43,6 @@ public class FSTriggerFileNameGetFileService {
             return null;
         }
 
-        log.info("\n" + String.format("Trying to monitor the file pattern '%s'", fileInfo.getFilePathPattern()));
         FileNameExtractInfo extractInfo = extract(fileInfo.getFilePathPattern());
         String folder = extractInfo.getRootDir();
         String fileName = extractInfo.getFileNamePattern();

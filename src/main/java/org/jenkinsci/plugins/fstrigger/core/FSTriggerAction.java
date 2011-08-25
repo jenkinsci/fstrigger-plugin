@@ -21,20 +21,6 @@ public class FSTriggerAction implements Action {
 
     private transient String actionTitle;
 
-    //private transient Map<String, String[]>  = new HashMap<String, String[]>();
-
-//    private transient String actionTitle;
-//
-//    private transient String[] subActionTitle;
-
-//    public FSTriggerAction(AbstractProject<?, ?> job, File logFile, String actionTitle, String[] subActionTitle) {
-//        this.job = job;
-//        this.logFile = logFile;
-//        this.actionTitle = actionTitle;
-//        this.subActionTitle = subActionTitle;
-//    }
-
-
     public FSTriggerAction(AbstractProject<?, ?> job, File logFile, String actionTitle) {
         this.job = job;
         this.logFile = logFile;
@@ -49,16 +35,6 @@ public class FSTriggerAction implements Action {
     public String getActionTitle() {
         return actionTitle;
     }
-//
-//    @SuppressWarnings("unused")
-//    public String[] getSubActionTitle() {
-//        return subActionTitle;
-//    }
-
-//    @SuppressWarnings("unused")
-//    public Map<String, String[]> getActions() {
-//        return actions;
-//    }
 
     public String getIconFileName() {
         return "clipboard.gif";

@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
+import hudson.Util;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
@@ -35,7 +36,7 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
     @DataBoundConstructor
     public PropertiesFileContent(String keys2Inspect, boolean allKeys) {
         if (keys2Inspect != null && !keys2Inspect.trim().isEmpty()) {
-            this.keys2Inspect = keys2Inspect.trim();
+            this.keys2Inspect = Util.fixEmpty(keys2Inspect);
         }
         this.allKeys = allKeys;
     }
