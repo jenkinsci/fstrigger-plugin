@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.regex.Matcher;
 
 
 /**
@@ -146,7 +147,7 @@ public class FSTriggerFileNameGetFileService {
         }
 
         filePattern = filePattern.replaceAll("[\t\r\n]+", " ");
-        filePattern = filePattern.replaceAll("\\\\", File.separator);
+        filePattern = filePattern.replaceAll("\\\\", Matcher.quoteReplacement(File.separator));
         filePattern = filePattern.trim();
 
         return filePattern;
