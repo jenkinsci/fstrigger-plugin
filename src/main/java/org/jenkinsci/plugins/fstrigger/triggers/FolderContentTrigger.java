@@ -198,6 +198,9 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         }
 
         Map<String, FileInfo> result = new HashMap<String, FileInfo>();
+        if (includes == null) {
+            includes = "**/*.*";
+        }
         FileSet fileSet = Util.createFileSet(new File(path), includes, excludes);
         for (Iterator it = fileSet.iterator(); it.hasNext();) {
             FileResource fileResource = (FileResource) it.next();
