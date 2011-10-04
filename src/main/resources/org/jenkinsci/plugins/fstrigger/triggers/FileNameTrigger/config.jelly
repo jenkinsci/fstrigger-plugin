@@ -31,19 +31,20 @@
                                 checked="${fileElement.inspectingContentFile}"
                                 title="${%Inspect file contents}">
 
+                            <f:entry>
+                                    <f:hetero-list name="contentFileTypes"
+                                                   descriptors="${descriptor.listFSTriggerFileNameDescriptors}"
+                                                   items="${fileElement.contentFileTypes}"
+                                                   addCaption="${%Add a content nature}"
+                                                   deleteCaption="${%Delete nature}"/>
+                                    <label class="attach-previous">Select different kinds of content nature</label>
+                            </f:entry>
+
                             <f:entry field="doNotCheckLastModificationDate">
                                 <f:checkbox name="doNotCheckLastModificationDate"
                                             checked="${fileElement.doNotCheckLastModificationDate}" default="${true}"/>
                                 <label class="attach-previous">${%Ignore modification date}</label>
                             </f:entry>
-
-                            <f:block>
-                                <f:hetero-list name="contentFileTypes"
-                                               descriptors="${descriptor.listFSTriggerFileNameDescriptors}"
-                                               items="${fileElement.contentFileTypes}"
-                                               addCaption="${%Add a content nature}"
-                                               deleteCaption="${%Delete nature}"/>
-                            </f:block>
 
                         </f:optionalBlock>
                     </table>

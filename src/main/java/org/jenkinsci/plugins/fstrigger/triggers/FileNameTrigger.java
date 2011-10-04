@@ -320,37 +320,9 @@ public class FileNameTrigger extends AbstractTrigger {
             return FormValidation.ok();
         }
 
-        private FileNameTriggerInfo fillAndGetEntry(StaplerRequest req, JSONObject entryObject) {
 
-            FileNameTriggerInfo info = new FileNameTriggerInfo();
-            info.setFilePathPattern(Util.fixEmpty(entryObject.getString("filePathPattern")));
-            info.setStrategy(entryObject.getString("strategy"));
-
-            //InspectingContent info extracting
-            Object inspectingFileContentObject = entryObject.get("inspectingContentFile");
-            if (inspectingFileContentObject == null) {
-                info.setInspectingContentFile(false);
-                //If we don't inspect the content, we inspect the last modification date
-                info.setDoNotCheckLastModificationDate(false);
-                info.setContentFileTypes(new FSTriggerContentFileType[0]);
-            } else {
-                JSONObject inspectingFileContentJSONObject = entryObject.getJSONObject("inspectingContentFile");
-                info.setInspectingContentFile(true);
-                //Get the no checked last modified date
-                info.setDoNotCheckLastModificationDate(inspectingFileContentJSONObject.getBoolean("doNotCheckLastModificationDate"));
-                //Content Types
-                JSON contentFileTypesJsonElt;
-                try {
-                    contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONArray("contentFileTypes");
-                } catch (JSONException jsone) {
-                    contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONObject("contentFileTypes");
-                }
-                List<FSTriggerContentFileType> types = req.bindJSONToList(FSTriggerContentFileType.class, contentFileTypesJsonElt);
-                info.setContentFileTypes(types.toArray(new FSTriggerContentFileType[types.size()]));
-            }
-
-            return info;
-
+        public FormValidation doCheckContentNature() {
+            return FormValidation.ok();
         }
 
         @Override
@@ -380,6 +352,54 @@ public class FileNameTrigger extends AbstractTrigger {
             }
 
         }
+
+        private FileNameTriggerInfo fillAndGetEntry(StaplerRequest req, JSONObject entryObject) {
+            FileNameTriggerInfo info = new FileNameTriggerInfo();
+            info.setFilePathPattern(Util.fixEmpty(entryObject.getString("filePathPattern")));
+            info.setStrategy(entryObject.getString("strategy"));
+            setInfoContentType(req, entryObject, info);
+            return info;
+
+        }
+
+        private void setInfoContentType(StaplerRequest req, JSONObject entryObject, FileNameTriggerInfo info) {
+            Object inspectingFileContentObject = entryObject.get("inspectingContentFile");
+            if (inspectingFileContentObject == null) {
+                unsetContentType(info);
+            } else {
+                JSONObject inspectingFileContentJSONObject = entryObject.getJSONObject("inspectingContentFile");
+                if (isNoContentNatureSelected(inspectingFileContentJSONObject)) {
+                    unsetContentType(info);
+                } else {
+                    info.setInspectingContentFile(true);
+                    info.setDoNotCheckLastModificationDate(inspectingFileContentJSONObject.getBoolean("doNotCheckLastModificationDate"));
+                    setContentNature(req, info, inspectingFileContentJSONObject);
+                }
+            }
+        }
+
+        private void unsetContentType(FileNameTriggerInfo info) {
+            info.setInspectingContentFile(false);
+            info.setDoNotCheckLastModificationDate(false);
+            info.setContentFileTypes(new FSTriggerContentFileType[0]);
+        }
+
+        private boolean isNoContentNatureSelected(JSONObject inspectingFileContentJSONObject) {
+            return inspectingFileContentJSONObject.size() == 1;
+        }
+
+        private void setContentNature(StaplerRequest req, FileNameTriggerInfo info, JSONObject inspectingFileContentJSONObject) {
+            JSON contentFileTypesJsonElt;
+            try {
+                contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONArray("contentFileTypes");
+            } catch (JSONException jsone) {
+                contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONObject("contentFileTypes");
+            }
+            List<FSTriggerContentFileType> types = req.bindJSONToList(FSTriggerContentFileType.class, contentFileTypesJsonElt);
+            info.setContentFileTypes(types.toArray(new FSTriggerContentFileType[types.size()]));
+        }
+
+
     }
 
     /**
