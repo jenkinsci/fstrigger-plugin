@@ -199,6 +199,10 @@ public class FileNameTrigger extends AbstractTrigger {
                 log.info("Inspecting the contents of '" + newResolvedFile + "'");
                 for (final FSTriggerContentFileType type : contentFileTypes) {
                     final Object memoryObject = type.getMemoryInfo();
+                    if (memoryObject==null){
+                        log.info("No modifications according the given criteria.");
+                        return false;
+                    }
                     boolean isTriggered = newResolvedFile.act(new FilePath.FileCallable<Boolean>() {
                         public Boolean invoke(File newResolvedFile, VirtualChannel channel) throws IOException, InterruptedException {
                             boolean isTriggered;

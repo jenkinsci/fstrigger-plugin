@@ -1,11 +1,14 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -21,7 +24,7 @@ public class TextFileContent extends FSTriggerContentFileType {
     private List<TextFileContentEntry> regexElements = new ArrayList<TextFileContentEntry>();
 
     @DataBoundConstructor
-    public TextFileContent(List<TextFileContentEntry> element) {
+    public TextFileContent(List<TextFileContentEntry> element) throws Descriptor.FormException {
         this.regexElements = element;
     }
 
@@ -33,7 +36,7 @@ public class TextFileContent extends FSTriggerContentFileType {
     @Override
     @SuppressWarnings("unchecked")
     public void setMemoryInfo(Object memoryInfo) {
-        if (!(memoryInfo instanceof List)) {
+        if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
         this.regexElements = (List<TextFileContentEntry>) memoryInfo;
@@ -60,7 +63,12 @@ public class TextFileContent extends FSTriggerContentFileType {
             //Check line by line if a pattern matches
             while ((line = bufferedReader.readLine()) != null) {
                 for (TextFileContentEntry regexEntry : regexElements) {
-                    Pattern pattern = Pattern.compile(regexEntry.getRegex());
+                    String regex = regexEntry.getRegex();
+                    if (regex == null) {
+                        log.info("You have to provide a pattern for each entry");
+                        return false;
+                    }
+                    Pattern pattern = Pattern.compile(regex);
                     Matcher matcher = pattern.matcher(line);
                     if (matcher.matches()) {
                         log.info(String.format("The line '%s' matches the pattern '%s'", line, pattern));
@@ -112,6 +120,23 @@ public class TextFileContent extends FSTriggerContentFileType {
         public String getLabel() {
             return "Text File";
         }
+
+
+        /**
+         * Performs presence check.
+         *
+         * @param value the regular expression
+         * @return the form validation object
+         */
+        public FormValidation doCheckRegex(@QueryParameter String value) {
+
+            if (value == null || value.trim().isEmpty()) {
+                return FormValidation.error("You must provide a regular expression.");
+            }
+
+            return FormValidation.ok();
+        }
+
     }
 
 }

@@ -1,11 +1,13 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -47,7 +49,7 @@ public class XMLFileContent extends FSTriggerContentFileType {
 
     @Override
     public void setMemoryInfo(Object memoryInfo) {
-        if (!(memoryInfo instanceof List)) {
+        if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a Map object.", memoryInfo));
         }
         this.results = (Map) memoryInfo;
@@ -168,6 +170,21 @@ public class XMLFileContent extends FSTriggerContentFileType {
         @Override
         public String getLabel() {
             return "XML File";
+        }
+
+        /**
+         * Performs presence check.
+         *
+         * @param value the xpath
+         * @return the form validation object
+         */
+        public FormValidation doCheckXPath(@QueryParameter String value) {
+
+            if (value == null || value.trim().isEmpty()) {
+                return FormValidation.error("You must provide an XPath.");
+            }
+
+            return FormValidation.ok();
         }
 
     }

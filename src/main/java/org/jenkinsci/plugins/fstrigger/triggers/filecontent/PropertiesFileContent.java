@@ -2,11 +2,13 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
 import java.io.FileReader;
@@ -48,7 +50,7 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
 
     @Override
     public void setMemoryInfo(Object memoryInfo) {
-        if (!(memoryInfo instanceof Properties)) {
+        if ((memoryInfo != null) && !(memoryInfo instanceof Properties)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a Properties object.", memoryInfo));
         }
         this.properties = (Properties) memoryInfo;
@@ -187,6 +189,22 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
         public String getLabel() {
             return "Properties File";
         }
+
+        /**
+         * Performs presence check.
+         *
+         * @param value the keys
+         * @return the form validation object
+         */
+        public FormValidation doCheckKeys(@QueryParameter String value) {
+
+            if (value == null || value.trim().isEmpty()) {
+                return FormValidation.error("You must provide keys.");
+            }
+
+            return FormValidation.ok();
+        }
+
     }
 
 }

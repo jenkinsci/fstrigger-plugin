@@ -35,7 +35,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
 
     @Override
     public void setMemoryInfo(Object memoryInfo) {
-        if (!(memoryInfo instanceof List)) {
+        if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
         this.zipEntries = (List) memoryInfo;

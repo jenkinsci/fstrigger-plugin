@@ -30,7 +30,7 @@ public class TextFileContentTest extends FileContentAbstractTest {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         List<TextFileContentEntry> expressions = new ArrayList<TextFileContentEntry>();
         expressions.add(new TextFileContentEntry("\\w*ERROR\\s*\\w*"));

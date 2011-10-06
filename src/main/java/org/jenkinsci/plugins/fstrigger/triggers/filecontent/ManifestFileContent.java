@@ -30,7 +30,7 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
 
     @Override
     public void setMemoryInfo(Object memoryInfo) {
-        if (!(memoryInfo instanceof Attributes)) {
+        if ((memoryInfo != null) && !(memoryInfo instanceof Attributes)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not an Attributes object.", memoryInfo));
         }
         this.attributes = (Attributes) memoryInfo;
