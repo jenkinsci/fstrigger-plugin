@@ -204,6 +204,15 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         FileSet fileSet = Util.createFileSet(new File(path), includes, excludes);
         for (Iterator it = fileSet.iterator(); it.hasNext();) {
             FileResource fileResource = (FileResource) it.next();
+            processFileResource(log, result, fileResource);
+        }
+        return result;
+    }
+
+    private void processFileResource(FSTriggerLog log, Map<String, FileInfo> result, FileResource fileResource) throws FSTriggerException {
+        if (!fileResource.isExists()) {
+            log.info(String.format("\nThe file '%s' doesn't exist anymore ", fileResource.getFile().getPath()));
+        } else {
             String currentMd5;
             try {
                 FileInputStream fis = new FileInputStream(fileResource.getFile());
@@ -216,9 +225,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             }
             FileInfo fileInfo = new FileInfo(currentMd5, fileResource.getLastModified());
             result.put(fileResource.getFile().getAbsolutePath(), fileInfo);
-
         }
-        return result;
     }
 
     @Override
