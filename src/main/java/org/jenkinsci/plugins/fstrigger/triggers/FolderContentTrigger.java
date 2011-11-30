@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers;
 
 import antlr.ANTLRException;
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
@@ -12,7 +11,8 @@ import hudson.util.StreamTaskListener;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
-import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
+import org.jenkinsci.plugins.fstrigger.core.FSTriggerFolderAction;
+import org.jenkinsci.plugins.fstrigger.service.FSTriggerEnvVarsResolver;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -75,6 +75,11 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         this.jobName = jobName;
     }
 
+    @Override
+    protected File getLogFile() {
+        return new File(job.getRootDir(), "trigger-polling-folder.log");
+    }
+
     class FileInfo implements Serializable {
 
         private final String md5;
@@ -118,7 +123,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             return null;
         }
 
-        Label label = ((AbstractProject) job).getAssignedLabel();
+        Label label = job.getAssignedLabel();
         if (label == null) {
             log.info("Polling on the master");
             return getFileInfoMaster(log);
@@ -138,13 +143,19 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     }
 
     private Map<String, FileInfo> getFileInfoMaster(FSTriggerLog log) throws FSTriggerException {
+        FilePath rootPath = Hudson.getInstance().getRootPath();
+        if (rootPath == null) {
+            return null;
+        }
 
-        String pathResolved = Util.replaceMacro(path, EnvVars.masterEnvVars);
-        String includesResolved = Util.replaceMacro(includes, EnvVars.masterEnvVars);
-        String excludesResolved = Util.replaceMacro(excludes, EnvVars.masterEnvVars);
+        Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, log);
+        String pathResolved = Util.replaceMacro(path, envVars);
+        String includesResolved = Util.replaceMacro(includes, envVars);
+        String excludesResolved = Util.replaceMacro(excludes, envVars);
 
         return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
     }
+
 
     private Map<String, FileInfo> getFileInfoLabel(Label label, final FSTriggerLog log) throws FSTriggerException {
 
@@ -158,12 +169,13 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             if (nodePath != null) {
                 currentSlave = nodePath;
                 try {
+                    final Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, log);
                     result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
                         public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
                             try {
-                                String pathResolved = Util.replaceMacro(path, EnvVars.masterEnvVars);
-                                String includesResolved = Util.replaceMacro(includes, EnvVars.masterEnvVars);
-                                String excludesResolved = Util.replaceMacro(excludes, EnvVars.masterEnvVars);
+                                String pathResolved = Util.replaceMacro(path, envVars);
+                                String includesResolved = Util.replaceMacro(includes, envVars);
+                                String excludesResolved = Util.replaceMacro(excludes, envVars);
                                 return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
                             } catch (FSTriggerException fse) {
                                 throw new RuntimeException(fse);
@@ -344,7 +356,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
          */
         try {
             initInfo(project.getName());
-            refreshMemoryInfo(true, new FSTriggerLog());
+            refreshMemoryInfo(true, new FSTriggerLog(TaskListener.NULL));
         } catch (FSTriggerException fse) {
             //Log the exception
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
@@ -371,14 +383,13 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
+        return Collections.singleton(new FSTriggerFolderAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
     }
 
     @Override
     public FolderContentTriggerDescriptor getDescriptor() {
         return (FolderContentTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
     }
-
 
     @Extension
     @SuppressWarnings("unused")

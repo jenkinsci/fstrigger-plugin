@@ -5,13 +5,14 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
-import hudson.remoting.VirtualChannel;
+import hudson.remoting.Callable;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author Gregory Boissinot
@@ -40,30 +41,29 @@ public class FSTriggerComputeFileService implements Serializable {
     @SuppressWarnings({"JavaDoc"})
     public FilePath computedFile(AbstractProject project, FileNameTriggerInfo fileInfo, FSTriggerLog log) throws FSTriggerException {
 
-        log.info(String.format("\nTrying to monitor the file pattern '%s'", fileInfo.getFilePathPattern()));
-
         Label label = project.getAssignedLabel();
         if (label == null) {
-            return computeFileOnMaster(fileInfo, log);
+            return computeFileOnMaster(fileInfo, project, log);
         }
 
-        return computeFileLabel(label, fileInfo, log);
+        return computeFileLabel(label, fileInfo, project, log);
     }
 
 
-    private FilePath computeFileOnMaster(FileNameTriggerInfo fileInfo, FSTriggerLog log) throws FSTriggerException {
+    private FilePath computeFileOnMaster(FileNameTriggerInfo fileInfo, AbstractProject project, FSTriggerLog log) throws FSTriggerException {
 
         log.info("Polling on the master");
-
-        File file = new FSTriggerFileNameGetFileService(fileInfo, log).call();
+        final Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars(project, log);
+        File file = new FSTriggerFileNameGetFileService(fileInfo, log, envVars).call();
         if (file != null) {
+            log.info(String.format("\nMonitoring the file pattern '%s'", file.getPath()));
             return new FilePath(Hudson.MasterComputer.localChannel, file.getPath());
         } else {
             return null;
         }
     }
 
-    private FilePath computeFileLabel(Label label, FileNameTriggerInfo fileInfo, FSTriggerLog log) throws FSTriggerException {
+    private FilePath computeFileLabel(Label label, FileNameTriggerInfo fileInfo, AbstractProject project, FSTriggerLog log) throws FSTriggerException {
 
         log.info(String.format("Polling on all nodes for the label '%s' attached to the job.", label));
 
@@ -73,10 +73,10 @@ public class FSTriggerComputeFileService implements Serializable {
         }
 
         for (Node node : label.getNodes()) {
-            File file = computeFileNode(node, fileInfo, log);
+            File file = computeFileNode(node, fileInfo, project, log);
             //We stop when the file exists on the slave
             if (file != null) {
-                log.info("The file is found.");
+                log.info(String.format("\nMonitoring the file pattern '%s'", file.getPath()));
                 return new FilePath(node.getChannel(), file.getPath());
             }
         }
@@ -85,21 +85,18 @@ public class FSTriggerComputeFileService implements Serializable {
         return null;
     }
 
-    private File computeFileNode(Node node, final FileNameTriggerInfo fileInfo, final FSTriggerLog log) throws FSTriggerException {
+    private File computeFileNode(Node node, final FileNameTriggerInfo fileInfo, final AbstractProject project, final FSTriggerLog log) throws FSTriggerException {
         try {
             FilePath nodePath = node.getRootPath();
             log.info(String.format("Polling on the node '%s'", node.getNodeName()));
             // Is null if the slave is offline
             if (nodePath != null) {
-                return nodePath.act(new FilePath.FileCallable<File>() {
-                    public File invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-                        try {
-                            return new FSTriggerFileNameGetFileService(fileInfo, log).call();
-                        } catch (FSTriggerException fse) {
-                            throw new RuntimeException(fse);
-                        }
+                final Map<String, String> envVars = nodePath.act(new Callable<Map<String, String>, FSTriggerException>() {
+                    public Map<String, String> call() throws FSTriggerException {
+                        return new FSTriggerEnvVarsResolver().getEnvVars(project, log);
                     }
                 });
+                return nodePath.act(new FSTriggerFileNameGetFileService(fileInfo, log, envVars));
             } else {
                 log.info(String.format("The node '%s' is offline", node.getNodeName()));
             }

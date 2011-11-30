@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.fstrigger.triggers;
 
 import antlr.ANTLRException;
 import hudson.Util;
-import hudson.model.AbstractProject;
 import hudson.model.BuildableItem;
 import hudson.model.Label;
 import hudson.triggers.Trigger;
@@ -40,9 +39,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      *
      * @return the trigger log
      */
-    protected File getLogFile() {
-        return new File(job.getRootDir(), "trigger-polling.log");
-    }
+    protected abstract File getLogFile();
 
     /**
      * Checks if the new folder content has been modified
@@ -94,7 +91,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     protected boolean isOfflineNodes() {
-        Label label = ((AbstractProject) job).getAssignedLabel();
+        Label label = job.getAssignedLabel();
         if (label == null) {
             return false;
         }

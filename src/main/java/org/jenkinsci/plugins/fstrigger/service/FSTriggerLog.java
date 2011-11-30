@@ -11,11 +11,12 @@ public class FSTriggerLog implements Serializable {
 
     private TaskListener listener;
 
-    public FSTriggerLog() {
-    }
-
     public FSTriggerLog(TaskListener listener) {
         this.listener = listener;
+    }
+
+    public TaskListener getListener() {
+        return listener;
     }
 
     public void info(String jobName, Class triggerClass, String message) {

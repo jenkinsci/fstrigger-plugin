@@ -15,8 +15,8 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
-import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
+import org.jenkinsci.plugins.fstrigger.core.FSTriggerFilesAction;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
@@ -59,13 +59,18 @@ public class FileNameTrigger extends AbstractTrigger {
     }
 
     @Override
+    protected File getLogFile() {
+        return new File(job.getRootDir(), "trigger-polling-files.log");
+    }
+
+    @Override
     public void start(BuildableItem project, boolean newInstance) {
 
         super.start(project, newInstance);
         try {
             FSTriggerComputeFileService service = FSTriggerComputeFileService.getInstance();
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new FSTriggerLog());
+                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new FSTriggerLog(TaskListener.NULL));
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());
@@ -260,7 +265,7 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
+        return Collections.singleton(new FSTriggerFilesAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
     }
 
     @Override

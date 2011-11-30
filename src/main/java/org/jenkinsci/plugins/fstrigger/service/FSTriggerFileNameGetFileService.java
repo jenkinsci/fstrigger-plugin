@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.service;
 
 import hudson.Util;
+import hudson.remoting.Callable;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
@@ -9,13 +10,14 @@ import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 
 /**
  * @author Gregory Boissinot
  */
-public class FSTriggerFileNameGetFileService {
+public class FSTriggerFileNameGetFileService implements Callable<File, FSTriggerException> {
 
     //The current logger
     private FSTriggerLog log;
@@ -23,7 +25,9 @@ public class FSTriggerFileNameGetFileService {
     // FileNameTrigger information
     private FileNameTriggerInfo fileInfo;
 
-    public FSTriggerFileNameGetFileService(FileNameTriggerInfo fileInfo, FSTriggerLog log) {
+    private Map<String, String> envVars;
+
+    public FSTriggerFileNameGetFileService(FileNameTriggerInfo fileInfo, FSTriggerLog log, Map<String, String> envVars) {
 
         if (log == null) {
             throw new NullPointerException("The log object must be set.");
@@ -35,6 +39,7 @@ public class FSTriggerFileNameGetFileService {
 
         this.log = log;
         this.fileInfo = fileInfo;
+        this.envVars = envVars;
     }
 
 
@@ -48,8 +53,7 @@ public class FSTriggerFileNameGetFileService {
         String folder = extractInfo.getRootDir();
         String fileName = extractInfo.getFileNamePattern();
 
-
-        //Tests the ¬existing of the folder
+        //Tests the existing of the folder
         File folderPathFile = new File(folder);
         if (!folderPathFile.exists()) {
             String msg = String.format("The folder path '%s' doesn't exist.", folder);
@@ -149,6 +153,8 @@ public class FSTriggerFileNameGetFileService {
         filePattern = filePattern.replaceAll("[\t\r\n]+", " ");
         filePattern = filePattern.replaceAll("\\\\", Matcher.quoteReplacement(File.separator));
         filePattern = filePattern.trim();
+
+        filePattern = Util.replaceMacro(filePattern, envVars);
 
         return filePattern;
     }
