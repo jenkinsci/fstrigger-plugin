@@ -44,7 +44,6 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     /**
      * Memory fields
      */
-    private transient String jobName;
     private transient Map<String, FileInfo> md5Map = new HashMap<String, FileInfo>();
     private transient FilePath currentSlave;
 
@@ -69,10 +68,6 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     @SuppressWarnings("unused")
     public String getExcludes() {
         return excludes;
-    }
-
-    private void initInfo(String jobName) {
-        this.jobName = jobName;
     }
 
     @Override
@@ -113,6 +108,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
      * Computes and gets the file information of the folder
      *
      * @param startingStage true if the caller is the starting stage
+     * @param log
      * @return the file of the folder information
      * @throws FSTriggerException
      */
@@ -148,11 +144,10 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             return null;
         }
 
-        Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, log);
+        Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
         String pathResolved = Util.replaceMacro(path, envVars);
         String includesResolved = Util.replaceMacro(includes, envVars);
         String excludesResolved = Util.replaceMacro(excludes, envVars);
-
         return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
     }
 
@@ -160,16 +155,13 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     private Map<String, FileInfo> getFileInfoLabel(Label label, final FSTriggerLog log) throws FSTriggerException {
 
         Set<Node> nodes = label.getNodes();
-        Node node;
-
         Map<String, FileInfo> result;
-        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-            node = it.next();
+        for (Node node : nodes) {
             FilePath nodePath = node.getRootPath();
             if (nodePath != null) {
                 currentSlave = nodePath;
                 try {
-                    final Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, log);
+                    final Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, node, log);
                     result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
                         public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
                             try {
@@ -355,7 +347,6 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
          * Records a md5 for each file of the folder that matches includes and excludes pattern
          */
         try {
-            initInfo(project.getName());
             refreshMemoryInfo(true, new FSTriggerLog(TaskListener.NULL));
         } catch (FSTriggerException fse) {
             //Log the exception

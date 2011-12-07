@@ -5,7 +5,6 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
-import hudson.remoting.Callable;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
@@ -51,9 +50,8 @@ public class FSTriggerComputeFileService implements Serializable {
 
 
     private FilePath computeFileOnMaster(FileNameTriggerInfo fileInfo, AbstractProject project, FSTriggerLog log) throws FSTriggerException {
-
+        Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars(project, Hudson.getInstance(), log);
         log.info("Polling on the master");
-        final Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars(project, log);
         File file = new FSTriggerFileNameGetFileService(fileInfo, log, envVars).call();
         if (file != null) {
             log.info(String.format("\nMonitoring the file pattern '%s'", file.getPath()));
@@ -91,11 +89,7 @@ public class FSTriggerComputeFileService implements Serializable {
             log.info(String.format("Polling on the node '%s'", node.getNodeName()));
             // Is null if the slave is offline
             if (nodePath != null) {
-                final Map<String, String> envVars = nodePath.act(new Callable<Map<String, String>, FSTriggerException>() {
-                    public Map<String, String> call() throws FSTriggerException {
-                        return new FSTriggerEnvVarsResolver().getEnvVars(project, log);
-                    }
-                });
+                Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars(project, node, log);
                 return nodePath.act(new FSTriggerFileNameGetFileService(fileInfo, log, envVars));
             } else {
                 log.info(String.format("The node '%s' is offline", node.getNodeName()));

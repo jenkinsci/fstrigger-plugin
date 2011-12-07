@@ -62,7 +62,7 @@ public class FSTriggerFileNameCheckedModifiedService {
         }
 
         if (!fileInfo.isDoNotCheckLastModificationDate() && (newResolvedFile.lastModified() != lastModifiedDate)) {
-            log.info("The last modified date of the file '" + newResolvedFile + "' has changed.");
+            log.info("The last modification date of the file '" + newResolvedFile + "' has changed.");
             return true;
         }
 

@@ -1,68 +1,86 @@
 package org.jenkinsci.plugins.fstrigger.service;
 
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Util;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Hudson;
+import hudson.model.Node;
+import hudson.model.Run;
+import hudson.remoting.Callable;
 import org.jenkinsci.plugins.envinject.EnvInjectAction;
 import org.jenkinsci.plugins.fstrigger.FSTriggerException;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
+
 
 /**
  * @author Gregory Boissinot
  */
-public class FSTriggerEnvVarsResolver {
+public class FSTriggerEnvVarsResolver implements Serializable {
 
-    public Map<String, String> getEnvVars(AbstractProject project, FSTriggerLog log) throws FSTriggerException {
-        try {
-            Run lastBuild = project.getLastBuild();
-            if (lastBuild != null) {
-                EnvInjectAction envInjectAction = lastBuild.getAction(EnvInjectAction.class);
-                if (envInjectAction != null) {
-                    return envInjectAction.getEnvMap();
-                }
-                return lastBuild.getEnvironment(log.getListener());
-            } else {
-                return getDefaultEnvVars(project, log.getListener());
+    public Map<String, String> getEnvVars(AbstractProject project, Node node, FSTriggerLog log) throws FSTriggerException {
+        Run lastBuild = project.getLastBuild();
+        if (lastBuild != null) {
+            EnvInjectAction envInjectAction = lastBuild.getAction(EnvInjectAction.class);
+            if (envInjectAction != null) {
+                return envInjectAction.getEnvMap();
             }
-        } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
-        } catch (InterruptedException ie) {
-            throw new FSTriggerException(ie);
         }
+        return getDefaultEnvVarsJob(project, node);
     }
 
-    private Map<String, String> getDefaultEnvVars(AbstractProject project, TaskListener listener) throws IOException, InterruptedException {
+    private Map<String, String> getDefaultEnvVarsJob(AbstractProject project, Node node) throws FSTriggerException {
+        Map<String, String> result = computeEnvVarsMaster(project);
+        if (node != null) {
+            result.putAll(computeEnvVarsNode(project, node));
+        }
+        return result;
+    }
 
+    private Map<String, String> computeEnvVarsMaster(AbstractProject project) throws FSTriggerException {
         EnvVars env = new EnvVars();
         env.put("JENKINS_SERVER_COOKIE", Util.getDigestOf("ServerID:" + Hudson.getInstance().getSecretKey()));
         env.put("HUDSON_SERVER_COOKIE", Util.getDigestOf("ServerID:" + Hudson.getInstance().getSecretKey())); // Legacy compatibility
         env.put("JOB_NAME", project.getFullName());
-        Computer c = Computer.currentComputer();
-        if (c != null)
-            env = c.getEnvironment().overrideAll(env);
         String rootUrl = Hudson.getInstance().getRootUrl();
         if (rootUrl != null) {
             env.put("JENKINS_URL", rootUrl);
             env.put("HUDSON_URL", rootUrl);
             env.put("JOB_URL", rootUrl + project.getUrl());
         }
-
         env.put("JENKINS_HOME", Hudson.getInstance().getRootDir().getPath());
         env.put("HUDSON_HOME", Hudson.getInstance().getRootDir().getPath());   // legacy compatibility
 
-        Thread t = Thread.currentThread();
-        if (t instanceof Executor) {
-            Executor e = (Executor) t;
-            env.put("EXECUTOR_NUMBER", String.valueOf(e.getNumber()));
-            env.put("NODE_NAME", e.getOwner().getName());
-            Node n = e.getOwner().getNode();
-            if (n != null)
-                env.put("NODE_LABELS", Util.join(n.getAssignedLabels(), " "));
-        }
-
         return env;
+    }
+
+    private Map<String, String> computeEnvVarsNode(AbstractProject project, Node node) throws FSTriggerException {
+        assert node != null;
+        assert node.getRootPath() != null;
+        try {
+            Map<String, String> envVars = node.getRootPath().act(new Callable<Map<String, String>, FSTriggerException>() {
+                public Map<String, String> call() throws FSTriggerException {
+                    return EnvVars.masterEnvVars;
+                }
+            });
+
+            envVars.put("NODE_NAME", node.getNodeName());
+            envVars.put("NODE_LABELS", Util.join(node.getAssignedLabels(), " "));
+            FilePath wFilePath = project.getSomeWorkspace();
+            if (wFilePath != null) {
+                envVars.put("WORKSPACE", wFilePath.getRemote());
+            }
+
+            return envVars;
+
+        } catch (IOException ioe) {
+            throw new FSTriggerException(ioe);
+        } catch (InterruptedException ie) {
+            throw new FSTriggerException(ie);
+        }
     }
 
 }

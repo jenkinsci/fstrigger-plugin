@@ -19,10 +19,8 @@ import java.util.regex.Matcher;
  */
 public class FSTriggerFileNameGetFileService implements Callable<File, FSTriggerException> {
 
-    //The current logger
     private FSTriggerLog log;
 
-    // FileNameTrigger information
     private FileNameTriggerInfo fileInfo;
 
     private Map<String, String> envVars;
@@ -39,7 +37,7 @@ public class FSTriggerFileNameGetFileService implements Callable<File, FSTrigger
 
         this.log = log;
         this.fileInfo = fileInfo;
-        this.envVars = envVars;
+        this.envVars =envVars;
     }
 
 
@@ -88,12 +86,18 @@ public class FSTriggerFileNameGetFileService implements Callable<File, FSTrigger
                 for (Iterator it = fileSet.iterator(); it.hasNext();) {
                     FileResource fileResource = (FileResource) it.next();
                     File curFile = fileResource.getFile();
-                    if ((lastModifiedFile == null) || curFile.lastModified() > lastModifiedFile.lastModified()) {
+                    if ((lastModifiedFile == null)
+                            || ((curFile != null) && curFile.lastModified() > lastModifiedFile.lastModified())) {
                         lastModifiedFile = curFile;
                     }
                 }
-                log.info("The selected file for polling is '" + lastModifiedFile.getPath() + "'");
-                return lastModifiedFile;
+
+                if (lastModifiedFile != null) {
+                    log.info("The selected file for polling is '" + lastModifiedFile.getPath() + "'");
+                    return lastModifiedFile;
+                }
+
+                return null;
             }
 
             throw new RuntimeException("The strategy '" + fileInfo.getStrategy() + "' is not supported.");
@@ -154,7 +158,9 @@ public class FSTriggerFileNameGetFileService implements Callable<File, FSTrigger
         filePattern = filePattern.replaceAll("\\\\", Matcher.quoteReplacement(File.separator));
         filePattern = filePattern.trim();
 
-        filePattern = Util.replaceMacro(filePattern, envVars);
+        if (envVars != null) {
+            filePattern = Util.replaceMacro(filePattern, envVars);
+        }
 
         return filePattern;
     }
