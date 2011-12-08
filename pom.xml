@@ -38,9 +38,17 @@
         <maven.compiler.target>1.6</maven.compiler.target>
         <junit.version>4.8.2</junit.version>
         <mockito.version>1.8.5</mockito.version>
+        <envinject.plugin>1.0</envinject.plugin>
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>envinject</artifactId>
+            <version>${envinject.plugin}</version>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -54,13 +62,6 @@
             <artifactId>mockito-all</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>envinject</artifactId>
-            <version>0.26</version>
-            <optional>true</optional>
         </dependency>
 
     </dependencies>

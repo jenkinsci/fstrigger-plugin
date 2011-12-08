@@ -45,15 +45,8 @@ public class FSTriggerEnvVarsResolver implements Serializable {
         env.put("JENKINS_SERVER_COOKIE", Util.getDigestOf("ServerID:" + Hudson.getInstance().getSecretKey()));
         env.put("HUDSON_SERVER_COOKIE", Util.getDigestOf("ServerID:" + Hudson.getInstance().getSecretKey())); // Legacy compatibility
         env.put("JOB_NAME", project.getFullName());
-        String rootUrl = Hudson.getInstance().getRootUrl();
-        if (rootUrl != null) {
-            env.put("JENKINS_URL", rootUrl);
-            env.put("HUDSON_URL", rootUrl);
-            env.put("JOB_URL", rootUrl + project.getUrl());
-        }
         env.put("JENKINS_HOME", Hudson.getInstance().getRootDir().getPath());
         env.put("HUDSON_HOME", Hudson.getInstance().getRootDir().getPath());   // legacy compatibility
-
         return env;
     }
 
