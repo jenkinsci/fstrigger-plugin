@@ -323,17 +323,18 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
                 return true;
             }
 
+            //Checks if the file from the new compute has been modified
+            if (originFileInfo.getLastModified() != newFileInfo.getLastModified()) {
+                log.info("The modification date of '" + originFilePath + "' has changed.");
+                return true;
+            }
+
             //Checks it the content file from the new compute has been modified
             if (!originFileInfo.getMd5().equals(newFileInfo.getMd5())) {
                 log.info("The contents of '" + originFilePath + "' have changed.");
                 return true;
             }
 
-            //Checks if the file from the new compute has been modified
-            if (originFileInfo.getLastModified() != newFileInfo.getLastModified()) {
-                log.info("The modification date of '" + originFilePath + "' has changed.");
-                return true;
-            }
         }
 
         return false;
@@ -347,7 +348,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
          * Records a md5 for each file of the folder that matches includes and excludes pattern
          */
         try {
-            refreshMemoryInfo(true, new FSTriggerLog(TaskListener.NULL));
+            refreshMemoryInfo(true, new FSTriggerLog((StreamTaskListener) TaskListener.NULL));
         } catch (FSTriggerException fse) {
             //Log the exception
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
