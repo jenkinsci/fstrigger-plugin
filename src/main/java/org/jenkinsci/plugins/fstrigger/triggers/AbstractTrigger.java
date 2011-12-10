@@ -87,6 +87,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             } catch (Throwable e) {
                 log.error("SEVERE - Polling error " + e.getMessage());
             }
+            finally {
+                log.closeQuietly();
+            }
         }
     }
 

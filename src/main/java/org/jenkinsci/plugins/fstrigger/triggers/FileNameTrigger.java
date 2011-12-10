@@ -70,7 +70,7 @@ public class FileNameTrigger extends AbstractTrigger {
         try {
             FSTriggerComputeFileService service = FSTriggerComputeFileService.getInstance();
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new FSTriggerLog(TaskListener.NULL));
+                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new FSTriggerLog((StreamTaskListener) TaskListener.NULL));
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());
@@ -251,7 +251,6 @@ public class FileNameTrigger extends AbstractTrigger {
             FSTriggerLog log = new FSTriggerLog(listener);
             Runner runner = new Runner(log);
             executorService.execute(runner);
-
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
             t.printStackTrace();

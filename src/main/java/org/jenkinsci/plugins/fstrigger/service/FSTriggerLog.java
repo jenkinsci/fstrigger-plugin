@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.service;
 
-import hudson.model.TaskListener;
+import hudson.util.StreamTaskListener;
 
 import java.io.Serializable;
 
@@ -9,13 +9,13 @@ import java.io.Serializable;
  */
 public class FSTriggerLog implements Serializable {
 
-    private TaskListener listener;
+    private StreamTaskListener listener;
 
-    public FSTriggerLog(TaskListener listener) {
+    public FSTriggerLog(StreamTaskListener listener) {
         this.listener = listener;
     }
 
-    public TaskListener getListener() {
+    public StreamTaskListener getListener() {
         return listener;
     }
 
@@ -45,5 +45,9 @@ public class FSTriggerLog implements Serializable {
         }
     }
 
-
+    public void closeQuietly() {
+        if (listener != null) {
+            listener.closeQuietly();
+        }
+    }
 }
