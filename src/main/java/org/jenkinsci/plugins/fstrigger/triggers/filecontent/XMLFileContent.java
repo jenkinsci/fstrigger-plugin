@@ -2,10 +2,10 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
 import hudson.util.FormValidation;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.w3c.dom.Document;
@@ -62,26 +62,26 @@ public class XMLFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
         xmlDocument = initXMLFile(file);
         results = readXMLPath(xmlDocument);
     }
 
-    private Document initXMLFile(File file) throws FSTriggerException {
+    private Document initXMLFile(File file) throws XTriggerException {
         Document xmlDocument;
         try {
             xmlDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file);
         } catch (SAXException e) {
-            throw new FSTriggerException(e);
+            throw new XTriggerException(e);
         } catch (IOException e) {
-            throw new FSTriggerException(e);
+            throw new XTriggerException(e);
         } catch (ParserConfigurationException e) {
-            throw new FSTriggerException(e);
+            throw new XTriggerException(e);
         }
         return xmlDocument;
     }
 
-    private Map<String, Object> readXMLPath(Document document) throws FSTriggerException {
+    private Map<String, Object> readXMLPath(Document document) throws XTriggerException {
         Map<String, Object> results = new HashMap<String, Object>(expressions.size());
         XPathFactory xPathFactory = XPathFactory.newInstance();
         XPath xPath = xPathFactory.newXPath();
@@ -93,13 +93,13 @@ public class XMLFileContent extends FSTriggerContentFileType {
                 results.put(expression, result);
             }
         } catch (XPathExpressionException xpe) {
-            throw new FSTriggerException(xpe);
+            throw new XTriggerException(xpe);
         }
         return results;
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         Document newDocument = initXMLFile(file);
         Map<String, Object> newResults = readXMLPath(newDocument);
@@ -112,12 +112,12 @@ public class XMLFileContent extends FSTriggerContentFileType {
         }
 
         if (results.size() != newResults.size()) {
-            throw new FSTriggerException("Regarding the trigger life cycle, the size between old results and new results have to be the same.");
+            throw new XTriggerException("Regarding the trigger life cycle, the size between old results and new results have to be the same.");
         }
 
         //The results object have to be the same keys
         if (!results.keySet().containsAll(newResults.keySet())) {
-            throw new FSTriggerException("Regarding the set up of the result objects, the keys for the old results and the new results have to the same.");
+            throw new XTriggerException("Regarding the set up of the result objects, the keys for the old results and the new results have to the same.");
         }
 
 

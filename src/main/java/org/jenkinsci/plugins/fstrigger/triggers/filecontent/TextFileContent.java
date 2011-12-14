@@ -3,10 +3,10 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -48,11 +48,11 @@ public class TextFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         FileReader fileReader = null;
         BufferedReader bufferedReader = null;
@@ -77,22 +77,22 @@ public class TextFileContent extends FSTriggerContentFileType {
                 }
             }
         } catch (FileNotFoundException fne) {
-            throw new FSTriggerException(fne);
+            throw new XTriggerException(fne);
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         } finally {
             if (bufferedReader != null) {
                 try {
                     bufferedReader.close();
                 } catch (IOException ioe) {
-                    throw new FSTriggerException(ioe);
+                    throw new XTriggerException(ioe);
                 }
             }
             if (fileReader != null) {
                 try {
                     fileReader.close();
                 } catch (IOException ioe) {
-                    throw new FSTriggerException(ioe);
+                    throw new XTriggerException(ioe);
                 }
             }
         }

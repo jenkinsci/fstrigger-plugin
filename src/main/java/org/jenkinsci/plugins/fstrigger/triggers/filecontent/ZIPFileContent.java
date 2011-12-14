@@ -2,10 +2,10 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
 import hudson.Util;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
@@ -38,7 +38,9 @@ public class ZIPFileContent extends FSTriggerContentFileType {
         if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
-        this.zipEntries = (List) memoryInfo;
+        if (memoryInfo instanceof List) {
+            this.zipEntries = (List) memoryInfo;
+        }
     }
 
     private List<ZipEntry> getListZipEntries(Enumeration<? extends ZipEntry> entriesEnumeration) {
@@ -50,7 +52,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
         try {
             ZipFile zipFile = new ZipFile(file);
             zipContent = new StringBuilder();
@@ -58,12 +60,12 @@ public class ZIPFileContent extends FSTriggerContentFileType {
             zipEntries = getListZipEntries(zipFile.entries());
 
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         List<ZipEntry> newZipEntries;
         try {
@@ -120,7 +122,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
 
                 byte[] initBytes = initZipEntry.getExtra();
                 byte[] newBytes = newZipEntry.getExtra();
-                boolean changedMd5 = false;
+                boolean changedMd5;
                 if (initBytes == null && newBytes == null) {
                     changedMd5 = false;
                 } else if (initBytes == null || newBytes == null) {
@@ -143,7 +145,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
             return changed;
 
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
     }
 

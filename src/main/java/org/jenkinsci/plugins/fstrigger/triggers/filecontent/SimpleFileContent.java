@@ -3,10 +3,10 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
 import hudson.Util;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
@@ -43,29 +43,29 @@ public class SimpleFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
         try {
             FileInputStream fis = new FileInputStream(file);
             md5 = Util.getDigestOf(fis);
             fis.close();
         } catch (FileNotFoundException fne) {
-            throw new FSTriggerException(fne);
+            throw new XTriggerException(fne);
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
         String newComputedMd5;
         try {
             FileInputStream fis = new FileInputStream(file);
             newComputedMd5 = Util.getDigestOf(fis);
             fis.close();
         } catch (FileNotFoundException fne) {
-            throw new FSTriggerException(fne);
+            throw new XTriggerException(fne);
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
 
         assert md5 != null;

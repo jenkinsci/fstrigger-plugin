@@ -14,12 +14,12 @@ import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerFilesAction;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 /**
  * @author Gregory Boissinot
  */
-public class FileNameTrigger extends AbstractTrigger {
+public class FileNameTrigger extends AbstractFSTrigger {
 
     public static final String STRATEGY_IGNORE = "IGNORE";
     public static final String STRATEGY_LATEST = "LATEST";
@@ -70,7 +70,7 @@ public class FileNameTrigger extends AbstractTrigger {
         try {
             FSTriggerComputeFileService service = FSTriggerComputeFileService.getInstance();
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new FSTriggerLog((StreamTaskListener) TaskListener.NULL));
+                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());
@@ -83,7 +83,7 @@ public class FileNameTrigger extends AbstractTrigger {
                 }
             }
 
-        } catch (FSTriggerException fse) {
+        } catch (XTriggerException fse) {
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
             fse.printStackTrace();
         } catch (Throwable t) {
@@ -92,7 +92,7 @@ public class FileNameTrigger extends AbstractTrigger {
         }
     }
 
-    private void initContentElementsIfNeed(FileNameTriggerInfo info) throws FSTriggerException {
+    private void initContentElementsIfNeed(FileNameTriggerInfo info) throws XTriggerException {
 
         FilePath resolvedFile = info.getResolvedFile();
         if (resolvedFile != null) {
@@ -108,7 +108,7 @@ public class FileNameTrigger extends AbstractTrigger {
                                     public Object invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                                         try {
                                             type.initMemoryFields(jobName, f);
-                                        } catch (FSTriggerException fse) {
+                                        } catch (XTriggerException fse) {
                                             throw new RuntimeException(fse);
                                         }
                                         return type.getMemoryInfo();
@@ -116,11 +116,11 @@ public class FileNameTrigger extends AbstractTrigger {
                                 });
                                 type.setMemoryInfo(memoryInfo);
                             } catch (IOException ioe) {
-                                throw new FSTriggerException(ioe);
+                                throw new XTriggerException(ioe);
                             } catch (InterruptedException ie) {
-                                throw new FSTriggerException(ie);
+                                throw new XTriggerException(ie);
                             } catch (Throwable t) {
-                                throw new FSTriggerException(t);
+                                throw new XTriggerException(t);
                             }
                         }
                     }
@@ -129,7 +129,7 @@ public class FileNameTrigger extends AbstractTrigger {
         }
     }
 
-    private void refreshMemoryInfo(FileNameTriggerInfo info, FilePath newComputedFile) throws FSTriggerException {
+    private void refreshMemoryInfo(FileNameTriggerInfo info, FilePath newComputedFile) throws XTriggerException {
         try {
             if (newComputedFile != null && newComputedFile.exists()) {
                 info.setResolvedFile(newComputedFile);
@@ -140,16 +140,16 @@ public class FileNameTrigger extends AbstractTrigger {
                 info.setLastModifications(0l);
             }
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         } catch (InterruptedException ie) {
-            throw new FSTriggerException(ie);
+            throw new XTriggerException(ie);
         }
 
     }
 
 
     @Override
-    protected boolean checkIfModified(final FSTriggerLog log) throws FSTriggerException {
+    protected boolean checkIfModified(final XTriggerLog log) throws XTriggerException {
 
         for (FileNameTriggerInfo info : fileInfo) {
 
@@ -171,7 +171,7 @@ public class FileNameTrigger extends AbstractTrigger {
         return false;
     }
 
-    private boolean checkIfModifiedFile(FilePath newResolvedFile, final FileNameTriggerInfo info, final FSTriggerLog log) throws FSTriggerException {
+    private boolean checkIfModifiedFile(FilePath newResolvedFile, final FileNameTriggerInfo info, final XTriggerLog log) throws XTriggerException {
 
         // Do not trigger a build if the new computed file doesn't exist.
         if (newResolvedFile == null) {
@@ -188,7 +188,7 @@ public class FileNameTrigger extends AbstractTrigger {
                     try {
                         FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, info, resolvedFilePath, lastModification, newResolvedFile);
                         return service.checkFileName();
-                    } catch (FSTriggerException fse) {
+                    } catch (XTriggerException fse) {
                         throw new RuntimeException(fse);
                     }
                 }
@@ -215,7 +215,7 @@ public class FileNameTrigger extends AbstractTrigger {
                                 FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, info, resolvedFilePath, lastModification, newResolvedFile);
                                 type.setMemoryInfo(memoryObject);
                                 isTriggered = service.checkContentType(type);
-                            } catch (FSTriggerException fse) {
+                            } catch (XTriggerException fse) {
                                 throw new RuntimeException(fse);
                             }
                             return isTriggered;
@@ -231,11 +231,11 @@ public class FileNameTrigger extends AbstractTrigger {
 
 
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         } catch (InterruptedException ie) {
-            throw new FSTriggerException(ie);
+            throw new XTriggerException(ie);
         } catch (Throwable e) {
-            throw new FSTriggerException(e);
+            throw new XTriggerException(e);
         }
         return false;
     }
@@ -248,8 +248,8 @@ public class FileNameTrigger extends AbstractTrigger {
         StreamTaskListener listener;
         try {
             listener = new StreamTaskListener(getLogFile());
-            FSTriggerLog log = new FSTriggerLog(listener);
-            Runner runner = new Runner(log);
+            XTriggerLog log = new XTriggerLog(listener);
+            Runner runner = new Runner(log, "FSTrigger");
             executorService.execute(runner);
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());

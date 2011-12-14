@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class TextFileContentTest extends FileContentAbstractTest {
     FSTriggerContentFileType type;
 
     @Mock
-    FSTriggerLog log;
+    XTriggerLog log;
 
     @Override
     public FSTriggerContentFileType getTypeInstance() {
@@ -38,18 +38,18 @@ public class TextFileContentTest extends FileContentAbstractTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testInitNullFileRefAsInput() throws URISyntaxException, FSTriggerException {
+    public void testInitNullFileRefAsInput() throws URISyntaxException, XTriggerException {
         initType(null);
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testInitNoExistFileAsInput() throws URISyntaxException, FSTriggerException {
+    @Test(expected = XTriggerException.class)
+    public void testInitNoExistFileAsInput() throws URISyntaxException, XTriggerException {
         File initFile = new File("noExist.txt");
         initType(initFile);
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testPollingNewFileNoExistAsInput() throws FSTriggerException, URISyntaxException {
+    @Test(expected = XTriggerException.class)
+    public void testPollingNewFileNoExistAsInput() throws XTriggerException, URISyntaxException {
         File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
         initType(initFile);
         type.isTriggeringBuild(new File("noExist"), log);
@@ -57,14 +57,14 @@ public class TextFileContentTest extends FileContentAbstractTest {
 
 
     @Test(expected = NullPointerException.class)
-    public void testPollingNewFileNullReferenceAsInput() throws FSTriggerException, URISyntaxException {
+    public void testPollingNewFileNullReferenceAsInput() throws XTriggerException, URISyntaxException {
         File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
         initType(initFile);
         type.isTriggeringBuild(null, log);
     }
 
     @Test
-    public void testPolling() throws URISyntaxException, FSTriggerException {
+    public void testPolling() throws URISyntaxException, XTriggerException {
         File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
         initType(initFile);
         Assert.assertFalse(type.isTriggeringBuild(initFile, log));

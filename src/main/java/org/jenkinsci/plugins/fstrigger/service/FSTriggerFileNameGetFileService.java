@@ -4,7 +4,8 @@ import hudson.Util;
 import hudson.remoting.Callable;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTrigger;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
@@ -17,15 +18,15 @@ import java.util.regex.Matcher;
 /**
  * @author Gregory Boissinot
  */
-public class FSTriggerFileNameGetFileService implements Callable<File, FSTriggerException> {
+public class FSTriggerFileNameGetFileService implements Callable<File, XTriggerException> {
 
-    private FSTriggerLog log;
+    private XTriggerLog log;
 
     private FileNameTriggerInfo fileInfo;
 
     private Map<String, String> envVars;
 
-    public FSTriggerFileNameGetFileService(FileNameTriggerInfo fileInfo, FSTriggerLog log, Map<String, String> envVars) {
+    public FSTriggerFileNameGetFileService(FileNameTriggerInfo fileInfo, XTriggerLog log, Map<String, String> envVars) {
 
         if (log == null) {
             throw new NullPointerException("The log object must be set.");
@@ -37,11 +38,11 @@ public class FSTriggerFileNameGetFileService implements Callable<File, FSTrigger
 
         this.log = log;
         this.fileInfo = fileInfo;
-        this.envVars =envVars;
+        this.envVars = envVars;
     }
 
 
-    public File call() throws FSTriggerException {
+    public File call() throws XTriggerException {
 
         if (fileInfo.getFilePathPattern() == null) {
             return null;
@@ -127,19 +128,19 @@ public class FSTriggerFileNameGetFileService implements Callable<File, FSTrigger
         }
     }
 
-    private FileNameExtractInfo extract(String filePattern) throws FSTriggerException {
+    private FileNameExtractInfo extract(String filePattern) throws XTriggerException {
 
         String fileToMonitor = filter(filePattern);
         if (fileToMonitor == null) {
-            throw new FSTriggerException("There is not files to monitor.");
+            throw new XTriggerException("There is not files to monitor.");
         }
 
         if (fileToMonitor.length() < 2) {
-            throw new FSTriggerException("The given pattern for the file to monitor must have a directory.");
+            throw new XTriggerException("The given pattern for the file to monitor must have a directory.");
         }
 
         if (fileToMonitor.lastIndexOf(File.separator) == -1) {
-            throw new FSTriggerException("The given pattern for the file to monitor must have a directory.");
+            throw new XTriggerException("The given pattern for the file to monitor must have a directory.");
         }
 
         return new FileNameExtractInfo(

@@ -1,26 +1,14 @@
 package org.jenkinsci.plugins.fstrigger;
 
-import hudson.model.Cause;
+import org.jenkinsci.lib.xtrigger.XTriggerCause;
 
 /**
  * @author Gregory Boissinot
  */
-public class FSTriggerCause extends Cause {
-
-    private final String causeFrom;
+@Deprecated
+public class FSTriggerCause extends XTriggerCause {
 
     public FSTriggerCause(String causeFrom) {
-        this.causeFrom = causeFrom;
+        super("FSTrigger", causeFrom);
     }
-
-    @Override
-    public String getShortDescription() {
-        if (causeFrom == null) {
-            return "[FSTrigger]";
-        } else {
-            return String.format("[FSTrigger] '%s'", causeFrom);
-        }
-    }
-
-
 }

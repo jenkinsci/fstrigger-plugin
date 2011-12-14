@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
@@ -45,17 +45,17 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
     protected abstract Manifest getManifest(File file);
 
 
-    private Attributes computeAttributesObject(File file) throws FSTriggerException {
+    private Attributes computeAttributesObject(File file) throws XTriggerException {
         Manifest manifest = getManifest(file);
         if (manifest == null) {
-            throw new FSTriggerException(String.format("The file '%s' doesn't contain any MANIFEST file", file));
+            throw new XTriggerException(String.format("The file '%s' doesn't contain any MANIFEST file", file));
         }
 
         Attributes ats = manifest.getMainAttributes();
         if (ats.isEmpty()) {
             //We don't accept a MANIFEST without attributes
             //Note: If the file is not a MANIFEST file, it has no attributes.
-            throw new FSTriggerException(String.format("The MANIFEST file '%s' doesn't contain any attributes", file));
+            throw new XTriggerException(String.format("The MANIFEST file '%s' doesn't contain any attributes", file));
         }
 
         if (allKeys) {
@@ -79,7 +79,7 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
                 Object fileKeyObject = entry.getKey();
                 Attributes.Name fileKey = null;
                 if (!(fileKeyObject instanceof Attributes.Name)) {
-                    throw new FSTriggerException("Internal Error of conversion");
+                    throw new XTriggerException("Internal Error of conversion");
                 } else {
                     fileKey = (Attributes.Name) fileKeyObject;
                     if (inputKeyList.contains(fileKey.toString())) {
@@ -93,12 +93,12 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
 
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
         this.attributes = computeAttributesObject(file);
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         if (attributes == null) {
             return false;

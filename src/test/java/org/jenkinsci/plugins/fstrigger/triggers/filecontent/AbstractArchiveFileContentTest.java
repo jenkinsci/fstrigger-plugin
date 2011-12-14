@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -18,7 +18,7 @@ public abstract class AbstractArchiveFileContentTest extends FileContentAbstract
     protected FSTriggerContentFileType type;
 
     @Mock
-    FSTriggerLog log;
+    XTriggerLog log;
 
 
     public FSTriggerContentFileType getTypeInstance() {
@@ -36,46 +36,46 @@ public abstract class AbstractArchiveFileContentTest extends FileContentAbstract
     protected abstract File getNotGoodTypeFile() throws URISyntaxException;
 
     @Test(expected = NullPointerException.class)
-    public void testInitNullFileRefAsInput() throws URISyntaxException, FSTriggerException {
+    public void testInitNullFileRefAsInput() throws URISyntaxException, XTriggerException {
         initType(null);
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testInitNoExistFileAsInput() throws URISyntaxException, FSTriggerException {
+    @Test(expected = XTriggerException.class)
+    public void testInitNoExistFileAsInput() throws URISyntaxException, XTriggerException {
         initType(getNoExistFile());
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testInitNoGoodFileAsInput() throws URISyntaxException, FSTriggerException {
+    @Test(expected = XTriggerException.class)
+    public void testInitNoGoodFileAsInput() throws URISyntaxException, XTriggerException {
         initType(getNotGoodTypeFile());
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testPollingNewFileNoExistAsInput() throws FSTriggerException, URISyntaxException {
+    @Test(expected = XTriggerException.class)
+    public void testPollingNewFileNoExistAsInput() throws XTriggerException, URISyntaxException {
         initType(getInitFile());
         type.isTriggeringBuild(getNoExistFile(), log);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testPollingNewFileNullReferenceAsInput() throws FSTriggerException, URISyntaxException {
+    public void testPollingNewFileNullReferenceAsInput() throws XTriggerException, URISyntaxException {
         initType(getInitFile());
         type.isTriggeringBuild(null, log);
     }
 
     @Test
-    public void testPollingSameFile() throws URISyntaxException, FSTriggerException {
+    public void testPollingSameFile() throws URISyntaxException, XTriggerException {
         initType(getInitFile());
         Assert.assertFalse(type.isTriggeringBuild(getInitFile(), log));
     }
 
     @Test
-    public void testPollingNewContentOneLeastFile() throws URISyntaxException, FSTriggerException {
+    public void testPollingNewContentOneLeastFile() throws URISyntaxException, XTriggerException {
         initType(getInitFile());
         Assert.assertTrue(type.isTriggeringBuild(getNewFileChangedContentOneFile(), log));
     }
 
     @Test
-    public void testPollingNewContentAddedFile() throws URISyntaxException, FSTriggerException {
+    public void testPollingNewContentAddedFile() throws URISyntaxException, XTriggerException {
         initType(getInitFile());
         Assert.assertTrue(type.isTriggeringBuild(getNewFileAddedFile(), log));
     }

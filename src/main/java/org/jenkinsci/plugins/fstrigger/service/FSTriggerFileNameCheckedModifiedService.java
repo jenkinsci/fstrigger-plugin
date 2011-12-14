@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.service;
 
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
@@ -11,7 +12,7 @@ import java.io.File;
  */
 public class FSTriggerFileNameCheckedModifiedService {
 
-    private FSTriggerLog log;
+    private XTriggerLog log;
 
     private FileNameTriggerInfo fileInfo;
 
@@ -21,7 +22,7 @@ public class FSTriggerFileNameCheckedModifiedService {
 
     private File newResolvedFile;
 
-    public FSTriggerFileNameCheckedModifiedService(FSTriggerLog log, FileNameTriggerInfo fileInfo, String resolvedFilePath, Long resolvedFileLastModified, File newResolvedFile) {
+    public FSTriggerFileNameCheckedModifiedService(XTriggerLog log, FileNameTriggerInfo fileInfo, String resolvedFilePath, Long resolvedFileLastModified, File newResolvedFile) {
 
         if (log == null) {
             throw new NullPointerException("The log object must be set.");
@@ -42,7 +43,7 @@ public class FSTriggerFileNameCheckedModifiedService {
         this.newResolvedFile = newResolvedFile;
     }
 
-    public Boolean checkFileName() throws FSTriggerException {
+    public Boolean checkFileName() throws XTriggerException {
 
         if (newResolvedFile == null) {
             log.info("The computed file doesn't exist.");
@@ -70,7 +71,7 @@ public class FSTriggerFileNameCheckedModifiedService {
     }
 
 
-    public Boolean checkContentType(FSTriggerContentFileType type) throws FSTriggerException {
+    public Boolean checkContentType(FSTriggerContentFileType type) throws XTriggerException {
         return type.isTriggeringBuild(newResolvedFile, log);
     }
 

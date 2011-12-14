@@ -10,10 +10,10 @@ import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.lib.xtrigger.service.XTriggerEnvVarsResolver;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerFolderAction;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerEnvVarsResolver;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.*;
@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 /**
  * @author Gregory Boissinot
  */
-public class FolderContentTrigger extends AbstractTrigger implements Serializable {
+public class FolderContentTrigger extends AbstractFSTrigger {
 
     private static Logger LOGGER = Logger.getLogger(FolderContentTrigger.class.getName());
 
@@ -96,11 +96,11 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
 
     }
 
-    private void refreshMemoryInfo(boolean startStage, FSTriggerLog log) throws FSTriggerException {
+    private void refreshMemoryInfo(boolean startStage, XTriggerLog log) throws XTriggerException {
         md5Map = getMd5Map(startStage, log);
     }
 
-    private void refreshMemoryInfo(Map<String, FileInfo> newMd5Map) throws FSTriggerException {
+    private void refreshMemoryInfo(Map<String, FileInfo> newMd5Map) throws XTriggerException {
         md5Map = newMd5Map;
     }
 
@@ -110,9 +110,9 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
      * @param startingStage true if the caller is the starting stage
      * @param log
      * @return the file of the folder information
-     * @throws FSTriggerException
+     * @throws XTriggerException
      */
-    private Map<String, FileInfo> getMd5Map(boolean startingStage, FSTriggerLog log) throws FSTriggerException {
+    private Map<String, FileInfo> getMd5Map(boolean startingStage, XTriggerLog log) throws XTriggerException {
 
         if (path == null) {
             log.info("A folder path must be set.");
@@ -138,13 +138,13 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         return getFileInfoLabel(label, log);
     }
 
-    private Map<String, FileInfo> getFileInfoMaster(FSTriggerLog log) throws FSTriggerException {
+    private Map<String, FileInfo> getFileInfoMaster(XTriggerLog log) throws XTriggerException {
         FilePath rootPath = Hudson.getInstance().getRootPath();
         if (rootPath == null) {
             return null;
         }
 
-        Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
+        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
         String pathResolved = Util.replaceMacro(path, envVars);
         String includesResolved = Util.replaceMacro(includes, envVars);
         String excludesResolved = Util.replaceMacro(excludes, envVars);
@@ -152,7 +152,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     }
 
 
-    private Map<String, FileInfo> getFileInfoLabel(Label label, final FSTriggerLog log) throws FSTriggerException {
+    private Map<String, FileInfo> getFileInfoLabel(Label label, final XTriggerLog log) throws XTriggerException {
 
         Set<Node> nodes = label.getNodes();
         Map<String, FileInfo> result;
@@ -161,7 +161,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             if (nodePath != null) {
                 currentSlave = nodePath;
                 try {
-                    final Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, node, log);
+                    final Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, node, log);
                     result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
                         public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
                             try {
@@ -169,13 +169,13 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
                                 String includesResolved = Util.replaceMacro(includes, envVars);
                                 String excludesResolved = Util.replaceMacro(excludes, envVars);
                                 return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
-                            } catch (FSTriggerException fse) {
+                            } catch (XTriggerException fse) {
                                 throw new RuntimeException(fse);
                             }
                         }
                     });
                 } catch (Throwable t) {
-                    throw new FSTriggerException(t);
+                    throw new XTriggerException(t);
                 }
 
                 //We stop at first slave with file information
@@ -188,7 +188,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         return null;
     }
 
-    private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes, FSTriggerLog log) throws FSTriggerException {
+    private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes, XTriggerLog log) throws XTriggerException {
 
         log.info(String.format("\nTrying to monitor the folder '%s'", path));
 
@@ -213,7 +213,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         return result;
     }
 
-    private void processFileResource(FSTriggerLog log, Map<String, FileInfo> result, FileResource fileResource) throws FSTriggerException {
+    private void processFileResource(XTriggerLog log, Map<String, FileInfo> result, FileResource fileResource) throws XTriggerException {
         if (!fileResource.isExists()) {
             log.info(String.format("\nThe file '%s' doesn't exist anymore ", fileResource.getFile().getPath()));
         } else {
@@ -223,9 +223,9 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
                 currentMd5 = Util.getDigestOf(fis);
                 fis.close();
             } catch (FileNotFoundException e) {
-                throw new FSTriggerException(e);
+                throw new XTriggerException(e);
             } catch (IOException e) {
-                throw new FSTriggerException(e);
+                throw new XTriggerException(e);
             }
             FileInfo fileInfo = new FileInfo(currentMd5, fileResource.getLastModified());
             result.put(fileResource.getFile().getAbsolutePath(), fileInfo);
@@ -238,7 +238,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     }
 
     @Override
-    protected synchronized boolean checkIfModified(final FSTriggerLog log) throws FSTriggerException {
+    protected synchronized boolean checkIfModified(final XTriggerLog log) throws XTriggerException {
 
         //Get the current information
         Map<String, FileInfo> newMd5Map = getMd5Map(false, log);
@@ -256,7 +256,7 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
     }
 
 
-    private boolean checkIfModified(final FSTriggerLog log, final Map<String, FileInfo> newMd5Map) throws FSTriggerException {
+    private boolean checkIfModified(final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
 
         //The folder doesn't exist anymore (or others), do not trigger the build
         if (newMd5Map == null) {
@@ -295,15 +295,15 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
                     }
                 });
             } catch (IOException ioe) {
-                throw new FSTriggerException(ioe);
+                throw new XTriggerException(ioe);
             } catch (InterruptedException ie) {
-                throw new FSTriggerException(ie);
+                throw new XTriggerException(ie);
             }
             return isTriggering;
         }
     }
 
-    private boolean computeEachFile(FSTriggerLog log, Map<String, FileInfo> originMd5Map, Map<String, FileInfo> newMd5Map) {
+    private boolean computeEachFile(XTriggerLog log, Map<String, FileInfo> originMd5Map, Map<String, FileInfo> newMd5Map) {
 
         assert log != null;
         assert originMd5Map != null;
@@ -319,19 +319,19 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
             //Checks if the newMd5Map contains the originFilePath
             FileInfo newFileInfo = newMd5Map.get(originFilePath);
             if (newFileInfo == null) {
-                log.info("The path '" + originFilePath + "' doesn't exist anymore.");
+                log.info(String.format("The path '%s' doesn't exist anymore.", originFilePath));
                 return true;
             }
 
             //Checks if the file from the new compute has been modified
             if (originFileInfo.getLastModified() != newFileInfo.getLastModified()) {
-                log.info("The modification date of '" + originFilePath + "' has changed.");
+                log.info(String.format("The '%s' last modification date has changed.", originFilePath));
                 return true;
             }
 
             //Checks it the content file from the new compute has been modified
             if (!originFileInfo.getMd5().equals(newFileInfo.getMd5())) {
-                log.info("The contents of '" + originFilePath + "' have changed.");
+                log.info(String.format("The '%s' content has changed.", originFilePath));
                 return true;
             }
 
@@ -348,9 +348,8 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
          * Records a md5 for each file of the folder that matches includes and excludes pattern
          */
         try {
-            refreshMemoryInfo(true, new FSTriggerLog((StreamTaskListener) TaskListener.NULL));
-        } catch (FSTriggerException fse) {
-            //Log the exception
+            refreshMemoryInfo(true, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
+        } catch (XTriggerException fse) {
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
             fse.printStackTrace();
         }
@@ -364,8 +363,8 @@ public class FolderContentTrigger extends AbstractTrigger implements Serializabl
         StreamTaskListener listener;
         try {
             listener = new StreamTaskListener(getLogFile());
-            FSTriggerLog log = new FSTriggerLog(listener);
-            Runner runner = new Runner(log);
+            XTriggerLog log = new XTriggerLog(listener);
+            Runner runner = new Runner(log, "FolderTrigger");
             executorService.execute(runner);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error during the trigger execution " + e.getMessage());

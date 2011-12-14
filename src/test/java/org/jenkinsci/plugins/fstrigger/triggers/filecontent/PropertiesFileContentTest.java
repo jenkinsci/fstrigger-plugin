@@ -1,9 +1,9 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import org.hamcrest.core.IsNull;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +26,7 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
     PropertiesFileContent type;
 
     @Mock
-    protected FSTriggerLog log;
+    protected XTriggerLog log;
 
     @Override
     public FSTriggerContentFileType getTypeInstance() {
@@ -72,7 +72,7 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
         }
     }
 
-    protected boolean isTriggered(FSTriggerContentFileType type, File initFile, File newFile) throws FSTriggerException {
+    protected boolean isTriggered(FSTriggerContentFileType type, File initFile, File newFile) throws XTriggerException {
         initType(initFile);
         return type.isTriggeringBuild(newFile, log);
     }
@@ -83,21 +83,21 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
     }
 
     @Test
-    public void test1InitParameters() throws FSTriggerException {
+    public void test1InitParameters() throws XTriggerException {
         type = getType(null, true);
         assertThat(type.isAllKeys(), equalTo(true));
         assertThat(type.getKeys2Inspect(), IsNull.<Object>nullValue());
     }
 
     @Test
-    public void test2InitParameters() throws FSTriggerException {
+    public void test2InitParameters() throws XTriggerException {
         type = getType("", true);
         assertThat(type.isAllKeys(), equalTo(true));
         assertThat(type.getKeys2Inspect(), IsNull.<Object>nullValue());
     }
 
     @Test
-    public void test3InitParameters() throws FSTriggerException {
+    public void test3InitParameters() throws XTriggerException {
         String keys = "key1, key2";
         type = getType(keys, true);
         assertThat(type.isAllKeys(), equalTo(true));
@@ -105,21 +105,21 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
     }
 
     @Test
-    public void test4InitParameters() throws FSTriggerException {
+    public void test4InitParameters() throws XTriggerException {
         type = getType(null, false);
         assertThat(type.isAllKeys(), equalTo(false));
         assertThat(type.getKeys2Inspect(), IsNull.<Object>nullValue());
     }
 
     @Test
-    public void test5InitParameters() throws FSTriggerException {
+    public void test5InitParameters() throws XTriggerException {
         type = getType("", false);
         assertThat(type.isAllKeys(), equalTo(false));
         assertThat(type.getKeys2Inspect(), IsNull.<Object>nullValue());
     }
 
     @Test
-    public void test6InitParameters() throws FSTriggerException {
+    public void test6InitParameters() throws XTriggerException {
         String keys = "key1, key2";
         type = new PropertiesFileContent(keys, false);
         assertThat(type.isAllKeys(), equalTo(false));
@@ -127,57 +127,57 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void test1NullFileAsInputInit() throws FSTriggerException {
+    public void test1NullFileAsInputInit() throws XTriggerException {
         type = getType(null, true);
         initType(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void test2NullFileAsInputInit() throws FSTriggerException {
+    public void test2NullFileAsInputInit() throws XTriggerException {
         type = getType(null, false);
         initType(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void test3NullFileAsInputInit() throws FSTriggerException {
+    public void test3NullFileAsInputInit() throws XTriggerException {
         type = getType("", true);
         initType(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void test4NullRefFileAsInputInit() throws FSTriggerException {
+    public void test4NullRefFileAsInputInit() throws XTriggerException {
         type = getType(null, false);
         initType(null);
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testFileNotExistAsInputInit() throws FSTriggerException {
+    @Test(expected = XTriggerException.class)
+    public void testFileNotExistAsInputInit() throws XTriggerException {
         type = getType(null, false);
         initType(getNoExistFile());
     }
 
-    @Test(expected = FSTriggerException.class)
-    public void testFileNotGoodFileTypeAsInputInit() throws FSTriggerException, URISyntaxException {
+    @Test(expected = XTriggerException.class)
+    public void testFileNotGoodFileTypeAsInputInit() throws XTriggerException, URISyntaxException {
         type = getType(null, false);
         initType(getNotGoodTypeFile());
     }
 
     @Test
-    public void testPollingAllKeys() throws URISyntaxException, FSTriggerException {
+    public void testPollingAllKeys() throws URISyntaxException, XTriggerException {
         type = getType(null, true);
         Assert.assertFalse(isTriggered(type, getInitFile(), getInitFile()));
         Assert.assertTrue(isTriggered(type, getInitFile(), getNewFile()));
     }
 
     @Test
-    public void testPollingNoKeys() throws URISyntaxException, FSTriggerException {
+    public void testPollingNoKeys() throws URISyntaxException, XTriggerException {
         type = getType(null, false);
         Assert.assertFalse(isTriggered(type, getInitFile(), getInitFile()));
         Assert.assertFalse(isTriggered(type, getInitFile(), getNewFile()));
     }
 
     @Test
-    public void testPollingSomeModifiedKeys() throws URISyntaxException, FSTriggerException {
+    public void testPollingSomeModifiedKeys() throws URISyntaxException, XTriggerException {
         String keys = "key1, key2, key4";
         type = getType(keys, false);
         Assert.assertFalse(isTriggered(type, getInitFile(), getInitFile()));
@@ -185,7 +185,7 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
     }
 
     @Test
-    public void testPollingSomeNoModifiedKeys() throws URISyntaxException, FSTriggerException {
+    public void testPollingSomeNoModifiedKeys() throws URISyntaxException, XTriggerException {
         String keys = "key1,key4";
         type = getType(keys, false);
         Assert.assertFalse(isTriggered(type, getInitFile(), getInitFile()));
@@ -193,7 +193,7 @@ public class PropertiesFileContentTest extends FileContentAbstractTest {
     }
 
     @Test
-    public void testPollingSomeNoExistingKeys() throws URISyntaxException, FSTriggerException {
+    public void testPollingSomeNoExistingKeys() throws URISyntaxException, XTriggerException {
         String keys = "key1NotExist,key4NotExist";
         type = getType(keys, false);
         Assert.assertFalse(isTriggered(type, getInitFile(), getInitFile()));

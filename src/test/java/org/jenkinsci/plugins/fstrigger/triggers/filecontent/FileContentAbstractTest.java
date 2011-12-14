@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.mockito.Mock;
 
 import java.io.File;
@@ -13,9 +13,9 @@ import java.io.File;
 public abstract class FileContentAbstractTest {
 
     @Mock
-    protected FSTriggerLog log;
+    protected XTriggerLog log;
 
-    protected void initType(File file) throws FSTriggerException {
+    protected void initType(File file) throws XTriggerException {
         getTypeInstance().initMemoryFields("jobTest", file);
     }
 

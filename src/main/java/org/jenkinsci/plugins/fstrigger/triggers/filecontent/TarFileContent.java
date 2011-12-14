@@ -3,10 +3,10 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 import hudson.Extension;
 import hudson.org.apache.tools.tar.TarInputStream;
 import org.apache.tools.tar.TarEntry;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
@@ -46,17 +46,17 @@ public class TarFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
         try {
             tarEntries = getTarEntries(file);
             if (tarEntries.isEmpty()) {
-                throw new FSTriggerException("The tar file is empty.");
+                throw new XTriggerException("The tar file is empty.");
             }
             tarContent = new StringBuilder();
             fillTarContent(tarEntries, tarContent);
 
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
     }
 
@@ -76,7 +76,7 @@ public class TarFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         List<TarEntry> newTarEntries;
         try {
@@ -173,7 +173,7 @@ public class TarFileContent extends FSTriggerContentFileType {
             return changed;
 
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
     }
 

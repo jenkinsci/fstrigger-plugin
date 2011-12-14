@@ -3,10 +3,10 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -97,7 +97,7 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
         return ok;
     }
 
-    private Properties computePropertiesObject(File file) throws FSTriggerException {
+    private Properties computePropertiesObject(File file) throws XTriggerException {
 
         Properties propsReader = new Properties();
         try {
@@ -105,11 +105,11 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
             propsReader.load(reader);
             reader.close();
         } catch (IOException ioe) {
-            throw new FSTriggerException(ioe);
+            throw new XTriggerException(ioe);
         }
 
         if (!isPropertiesFile(propsReader)) {
-            throw new FSTriggerException(String.format("The '%s' has no properties", file));
+            throw new XTriggerException(String.format("The '%s' has no properties", file));
         }
 
         if (allKeys) {
@@ -132,12 +132,12 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
     }
 
     @Override
-    protected void initForContent(File file) throws FSTriggerException {
+    protected void initForContent(File file) throws XTriggerException {
         this.properties = computePropertiesObject(file);
     }
 
     @Override
-    protected boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException {
+    protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         Properties newProperties = computePropertiesObject(file);
         assert newProperties != null;

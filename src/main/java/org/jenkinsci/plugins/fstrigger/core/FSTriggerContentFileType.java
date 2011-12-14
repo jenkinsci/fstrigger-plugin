@@ -4,8 +4,8 @@ import hudson.ExtensionPoint;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
-import org.jenkinsci.plugins.fstrigger.service.FSTriggerLog;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
 
 import java.io.File;
 import java.io.Serializable;
@@ -26,16 +26,16 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
      *
      * @param jobName the current job name
      * @param file    the current file to inspect
-     * @throws FSTriggerException
+     * @throws XTriggerException
      */
-    public void initMemoryFields(String jobName, File file) throws FSTriggerException {
+    public void initMemoryFields(String jobName, File file) throws XTriggerException {
         this.jobName = jobName;
 
         if (file == null) {
             throw new NullPointerException("The given file input reference is not set.");
         }
         if (!file.exists()) {
-            throw new FSTriggerException(String.format("The given file '%s' doesn't exist.", file));
+            throw new XTriggerException(String.format("The given file '%s' doesn't exist.", file));
         }
 
         initForContent(file);
@@ -48,15 +48,15 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
      * @param file the current file to check
      * @param log  the log object
      * @return true if we need to schedule a job, false otherwise
-     * @throws FSTriggerException
+     * @throws XTriggerException
      */
-    public boolean isTriggeringBuild(File file, FSTriggerLog log) throws FSTriggerException {
+    public boolean isTriggeringBuild(File file, XTriggerLog log) throws XTriggerException {
 
         if (file == null) {
             throw new NullPointerException("The given file input reference is not set.");
         }
         if (!file.exists()) {
-            throw new FSTriggerException(String.format("The given file '%s' doesn't exist.", file));
+            throw new XTriggerException(String.format("The given file '%s' doesn't exist.", file));
         }
 
         return isTriggeringBuildForContent(file, log);
@@ -70,9 +70,9 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
      * Cycle of the trigger
      * These methods have to be overridden in each trigger implementation
      */
-    protected abstract void initForContent(File file) throws FSTriggerException;
+    protected abstract void initForContent(File file) throws XTriggerException;
 
-    protected abstract boolean isTriggeringBuildForContent(File file, FSTriggerLog log) throws FSTriggerException;
+    protected abstract boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException;
 
 
     /**

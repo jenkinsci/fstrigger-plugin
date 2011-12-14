@@ -5,7 +5,9 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
-import org.jenkinsci.plugins.fstrigger.FSTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.lib.xtrigger.service.XTriggerEnvVarsResolver;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
 import java.io.File;
@@ -35,10 +37,10 @@ public class FSTriggerComputeFileService implements Serializable {
      *
      * @param fileInfo
      * @return a FilePath object to the file, null if the object can't be determined or doesn't exist
-     * @throws FSTriggerException
+     * @throws XTriggerException
      */
     @SuppressWarnings({"JavaDoc"})
-    public FilePath computedFile(AbstractProject project, FileNameTriggerInfo fileInfo, FSTriggerLog log) throws FSTriggerException {
+    public FilePath computedFile(AbstractProject project, FileNameTriggerInfo fileInfo, XTriggerLog log) throws XTriggerException {
 
         Label label = project.getAssignedLabel();
         if (label == null) {
@@ -49,8 +51,8 @@ public class FSTriggerComputeFileService implements Serializable {
     }
 
 
-    private FilePath computeFileOnMaster(FileNameTriggerInfo fileInfo, AbstractProject project, FSTriggerLog log) throws FSTriggerException {
-        Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars(project, Hudson.getInstance(), log);
+    private FilePath computeFileOnMaster(FileNameTriggerInfo fileInfo, AbstractProject project, XTriggerLog log) throws XTriggerException {
+        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars(project, Hudson.getInstance(), log);
         log.info("Polling on the master");
         File file = new FSTriggerFileNameGetFileService(fileInfo, log, envVars).call();
         if (file != null) {
@@ -61,7 +63,7 @@ public class FSTriggerComputeFileService implements Serializable {
         }
     }
 
-    private FilePath computeFileLabel(Label label, FileNameTriggerInfo fileInfo, AbstractProject project, FSTriggerLog log) throws FSTriggerException {
+    private FilePath computeFileLabel(Label label, FileNameTriggerInfo fileInfo, AbstractProject project, XTriggerLog log) throws XTriggerException {
 
         log.info(String.format("Polling on all nodes for the label '%s' attached to the job.", label));
 
@@ -83,21 +85,21 @@ public class FSTriggerComputeFileService implements Serializable {
         return null;
     }
 
-    private File computeFileNode(Node node, final FileNameTriggerInfo fileInfo, final AbstractProject project, final FSTriggerLog log) throws FSTriggerException {
+    private File computeFileNode(Node node, final FileNameTriggerInfo fileInfo, final AbstractProject project, final XTriggerLog log) throws XTriggerException {
         try {
             FilePath nodePath = node.getRootPath();
             log.info(String.format("Polling on the node '%s'", node.getNodeName()));
             // Is null if the slave is offline
             if (nodePath != null) {
-                Map<String, String> envVars = new FSTriggerEnvVarsResolver().getEnvVars(project, node, log);
+                Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars(project, node, log);
                 return nodePath.act(new FSTriggerFileNameGetFileService(fileInfo, log, envVars));
             } else {
                 log.info(String.format("The node '%s' is offline", node.getNodeName()));
             }
         } catch (IOException e) {
-            throw new FSTriggerException(e);
+            throw new XTriggerException(e);
         } catch (InterruptedException e) {
-            throw new FSTriggerException(e);
+            throw new XTriggerException(e);
         }
 
         return null;
