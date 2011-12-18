@@ -97,7 +97,11 @@ public class FolderContentTrigger extends AbstractFSTrigger {
     }
 
     private void refreshMemoryInfo(boolean startStage, XTriggerLog log) throws XTriggerException {
-        md5Map = getMd5Map(startStage, log);
+        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
+        String pathResolved = Util.replaceMacro(path, envVars);
+        String includesResolved = Util.replaceMacro(includes, envVars);
+        String excludesResolved = Util.replaceMacro(excludes, envVars);
+        md5Map = getMd5Map(pathResolved, includesResolved, excludesResolved, startStage, log);
     }
 
     private void refreshMemoryInfo(Map<String, FileInfo> newMd5Map) throws XTriggerException {
@@ -112,17 +116,16 @@ public class FolderContentTrigger extends AbstractFSTrigger {
      * @return the file of the folder information
      * @throws XTriggerException
      */
-    private Map<String, FileInfo> getMd5Map(boolean startingStage, XTriggerLog log) throws XTriggerException {
+    private Map<String, FileInfo> getMd5Map(String path, String includes, String excludes, boolean startingStage, XTriggerLog log) throws XTriggerException {
 
         if (path == null) {
             log.info("A folder path must be set.");
             return null;
         }
-
         Label label = job.getAssignedLabel();
         if (label == null) {
             log.info("Polling on the master");
-            return getFileInfoMaster(log);
+            return getFileInfoMaster(path, includes, excludes, log);
         }
 
         log.info(String.format("Polling on all nodes for the label '%s' attached to the job.", label));
@@ -138,17 +141,13 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         return getFileInfoLabel(label, log);
     }
 
-    private Map<String, FileInfo> getFileInfoMaster(XTriggerLog log) throws XTriggerException {
+    private Map<String, FileInfo> getFileInfoMaster(String path, String includes, String excludes, XTriggerLog log) throws XTriggerException {
         FilePath rootPath = Hudson.getInstance().getRootPath();
         if (rootPath == null) {
             return null;
         }
 
-        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
-        String pathResolved = Util.replaceMacro(path, envVars);
-        String includesResolved = Util.replaceMacro(includes, envVars);
-        String excludesResolved = Util.replaceMacro(excludes, envVars);
-        return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
+        return getFileInfo(path, includes, excludes, log);
     }
 
 
@@ -240,8 +239,13 @@ public class FolderContentTrigger extends AbstractFSTrigger {
     @Override
     protected synchronized boolean checkIfModified(final XTriggerLog log) throws XTriggerException {
 
+        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
+        String pathResolved = Util.replaceMacro(path, envVars);
+        String includesResolved = Util.replaceMacro(includes, envVars);
+        String excludesResolved = Util.replaceMacro(excludes, envVars);
+
         //Get the current information
-        Map<String, FileInfo> newMd5Map = getMd5Map(false, log);
+        Map<String, FileInfo> newMd5Map = getMd5Map(pathResolved, includesResolved, excludesResolved, false, log);
 
         if (offlineSlaveOnStartup) {
             refreshMemoryInfo(newMd5Map);
@@ -250,13 +254,13 @@ public class FolderContentTrigger extends AbstractFSTrigger {
             return false;
         }
 
-        boolean changed = checkIfModified(log, newMd5Map);
+        boolean changed = checkIfModified(pathResolved, log, newMd5Map);
         refreshMemoryInfo(newMd5Map);
         return changed;
     }
 
 
-    private boolean checkIfModified(final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
+    private boolean checkIfModified(String path, final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
 
         //The folder doesn't exist anymore (or others), do not trigger the build
         if (newMd5Map == null) {
