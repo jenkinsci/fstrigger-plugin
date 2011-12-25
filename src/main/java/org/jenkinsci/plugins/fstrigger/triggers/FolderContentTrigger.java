@@ -359,7 +359,6 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         }
     }
 
-
     @Override
     public void run() {
         FolderContentTriggerDescriptor descriptor = getDescriptor();
@@ -368,8 +367,12 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         try {
             listener = new StreamTaskListener(getLogFile());
             XTriggerLog log = new XTriggerLog(listener);
-            Runner runner = new Runner(log, "FolderTrigger");
-            executorService.execute(runner);
+            if (!Hudson.getInstance().isQuietingDown() && ((AbstractProject) job).isBuildable()) {
+                Runner runner = new Runner(log, "FolderTrigger");
+                executorService.execute(runner);
+            } else {
+                log.info("Jenkins is quieting down or job is not buildable.");
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error during the trigger execution " + e.getMessage());
             e.printStackTrace();

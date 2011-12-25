@@ -242,18 +242,19 @@ public class FileNameTrigger extends AbstractFSTrigger {
 
     @Override
     public void run() {
-
-        FileNameTriggerDescriptor descriptor = getDescriptor();
-        ExecutorService executorService = descriptor.getExecutor();
-        StreamTaskListener listener;
-        try {
-            listener = new StreamTaskListener(getLogFile());
-            XTriggerLog log = new XTriggerLog(listener);
-            Runner runner = new Runner(log, "FSTrigger");
-            executorService.execute(runner);
-        } catch (Throwable t) {
-            LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
-            t.printStackTrace();
+        if (!Hudson.getInstance().isQuietingDown() && ((AbstractProject) job).isBuildable()) {
+            FileNameTriggerDescriptor descriptor = getDescriptor();
+            ExecutorService executorService = descriptor.getExecutor();
+            StreamTaskListener listener;
+            try {
+                listener = new StreamTaskListener(getLogFile());
+                XTriggerLog log = new XTriggerLog(listener);
+                Runner runner = new Runner(log, "FSTrigger");
+                executorService.execute(runner);
+            } catch (Throwable t) {
+                LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
+                t.printStackTrace();
+            }
         }
     }
 
