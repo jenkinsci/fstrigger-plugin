@@ -8,7 +8,6 @@ import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
-import org.apache.tools.ant.*;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
