@@ -8,6 +8,7 @@ import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
+import org.apache.tools.ant.*;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -202,7 +203,7 @@ public class FolderContentTrigger extends AbstractFSTrigger {
 
         Map<String, FileInfo> result = new HashMap<String, FileInfo>();
         if (includes == null) {
-            includes = "**/*.*";
+            includes = "**/*.*, **/*";
         }
         FileSet fileSet = Util.createFileSet(new File(path), includes, excludes);
         for (Iterator it = fileSet.iterator(); it.hasNext();) {
@@ -371,7 +372,7 @@ public class FolderContentTrigger extends AbstractFSTrigger {
                 Runner runner = new Runner(log, "FolderTrigger");
                 executorService.execute(runner);
             } else {
-                log.info("Jenkins is quieting down or job is not buildable.");
+                log.info("Jenkins is quieting down or the job is not buildable.");
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error during the trigger execution " + e.getMessage());
