@@ -6,6 +6,8 @@ import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author Gregory Boissinot
@@ -18,7 +20,7 @@ public class FSTriggerFileNameCheckedModifiedService {
 
     private File resolvedFile;
 
-    private long lastModifiedDate;
+    private long lastModifiedDateTime;
 
     private File newResolvedFile;
 
@@ -39,7 +41,7 @@ public class FSTriggerFileNameCheckedModifiedService {
         } else {
             this.resolvedFile = new File(resolvedFilePath);
         }
-        this.lastModifiedDate = resolvedFileLastModified;
+        this.lastModifiedDateTime = resolvedFileLastModified;
         this.newResolvedFile = newResolvedFile;
     }
 
@@ -62,8 +64,13 @@ public class FSTriggerFileNameCheckedModifiedService {
             return true;
         }
 
-        if (!fileInfo.isDoNotCheckLastModificationDate() && (newResolvedFile.lastModified() != lastModifiedDate)) {
-            log.info("The last modification date of the file '" + newResolvedFile + "' has changed.");
+        if (!fileInfo.isDoNotCheckLastModificationDate() && (newResolvedFile.lastModified() != lastModifiedDateTime)) {
+            log.info("The last modification date of the file '" + newResolvedFile + "' has changed.\n");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM dd HH:mm:ss");
+            Date lastModifiedDate = new Date(lastModifiedDateTime);
+            Date newResolvedFileDate = new Date(newResolvedFile.lastModified());
+            log.info("The last date/time was   " + simpleDateFormat.format(lastModifiedDate));
+            log.info("The current date/time is " + simpleDateFormat.format(newResolvedFileDate));
             return true;
         }
 

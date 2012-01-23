@@ -53,10 +53,10 @@ public class FSTriggerComputeFileService implements Serializable {
 
     private FilePath computeFileOnMaster(FileNameTriggerInfo fileInfo, AbstractProject project, XTriggerLog log) throws XTriggerException {
         Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars(project, Hudson.getInstance(), log);
-        log.info("Polling on the master");
+        log.info("Polling on the master.");
         File file = new FSTriggerFileNameGetFileService(fileInfo, log, envVars).call();
         if (file != null) {
-            log.info(String.format("\nMonitoring the file pattern '%s'", file.getPath()));
+            log.info(String.format("\nInspecting the file '%s'.", file.getPath()));
             return new FilePath(Hudson.MasterComputer.localChannel, file.getPath());
         } else {
             return null;
@@ -76,25 +76,25 @@ public class FSTriggerComputeFileService implements Serializable {
             File file = computeFileNode(node, fileInfo, project, log);
             //We stop when the file exists on the slave
             if (file != null) {
-                log.info(String.format("\nMonitoring the file pattern '%s'", file.getPath()));
+                log.info(String.format("\nChecking the file '%s'.", file.getPath()));
                 return new FilePath(node.getChannel(), file.getPath());
             }
         }
 
-        log.info(String.format("The file doesn't exist for the slaves with the label '%s'", label));
+        log.info(String.format("The file doesn't exist for the slaves with the label '%s'.", label));
         return null;
     }
 
     private File computeFileNode(Node node, final FileNameTriggerInfo fileInfo, final AbstractProject project, final XTriggerLog log) throws XTriggerException {
         try {
             FilePath nodePath = node.getRootPath();
-            log.info(String.format("Polling on the node '%s'", node.getNodeName()));
+            log.info(String.format("Polling on the node '%s'.", node.getNodeName()));
             // Is null if the slave is offline
             if (nodePath != null) {
                 Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars(project, node, log);
                 return nodePath.act(new FSTriggerFileNameGetFileService(fileInfo, log, envVars));
             } else {
-                log.info(String.format("The node '%s' is offline", node.getNodeName()));
+                log.info(String.format("The node '%s' is offline.", node.getNodeName()));
             }
         } catch (IOException e) {
             throw new XTriggerException(e);
