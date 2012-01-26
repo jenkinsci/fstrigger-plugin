@@ -63,13 +63,13 @@ public class FSTriggerFileNameGetFileService implements Callable<File, XTriggerE
         //Computes all the files
         FileSet fileSet = Util.createFileSet(folderPathFile, fileName);
         if (fileSet.size() == 0) {
-            log.info(String.format("There is no matching files in the folder '%s' for the fileName '%s'", folder, fileName));
+            log.info(String.format("There is no matching files in the folder '%s' for the fileName '%s'.", folder, fileName));
             return null;
         }
 
         if (fileSet.size() == 1) {
             File file = ((FileResource) fileSet.iterator().next()).getFile();
-            log.info(String.format("Inspecting the file '%s'", file));
+            log.info(String.format("Checking one file: '%s'.", file));
             return file;
         }
 
@@ -94,7 +94,7 @@ public class FSTriggerFileNameGetFileService implements Callable<File, XTriggerE
                 }
 
                 if (lastModifiedFile != null) {
-                    log.info("The selected file for polling is '" + lastModifiedFile.getPath() + "'");
+                    log.info(String.format("The selected file to poll is '%s'.", lastModifiedFile.getPath()));
                     return lastModifiedFile;
                 }
 

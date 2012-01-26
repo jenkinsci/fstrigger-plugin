@@ -8,6 +8,7 @@ import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
+import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -204,12 +205,37 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         if (includes == null) {
             includes = "**/*.*, **/*";
         }
+
+        //Process Directories
+        DirSet dirSet = new DirSet();
+        dirSet.setProject(new org.apache.tools.ant.Project());
+        dirSet.setDir(new File(path));
+        dirSet.setIncludes("*");
+        if (excludes != null) {
+            dirSet.setExcludes(excludes);
+        }
+        for (Iterator it = dirSet.iterator(); it.hasNext();) {
+            FileResource fileResource = (FileResource) it.next();
+            processDirectoryResource(log, result, fileResource);
+        }
+
+        //Process files
         FileSet fileSet = Util.createFileSet(new File(path), includes, excludes);
         for (Iterator it = fileSet.iterator(); it.hasNext();) {
             FileResource fileResource = (FileResource) it.next();
             processFileResource(log, result, fileResource);
         }
         return result;
+    }
+
+
+    private void processDirectoryResource(XTriggerLog log, Map<String, FileInfo> result, FileResource folderResource) throws XTriggerException {
+        if (!folderResource.isExists()) {
+            log.info(String.format("\nThe folder '%s' doesn't exist anymore ", folderResource.getFile().getPath()));
+        } else {
+            FileInfo fileInfo = new FileInfo(null, folderResource.getLastModified());
+            result.put(folderResource.getFile().getAbsolutePath(), fileInfo);
+        }
     }
 
     private void processFileResource(XTriggerLog log, Map<String, FileInfo> result, FileResource fileResource) throws XTriggerException {
@@ -329,13 +355,13 @@ public class FolderContentTrigger extends AbstractFSTrigger {
 
             //Checks if the file from the new compute has been modified
             if (originFileInfo.getLastModified() != newFileInfo.getLastModified()) {
-                log.info(String.format("The '%s' last modification date has changed.", originFilePath));
+                log.info(String.format("The last modification date of '%s' has changed.", originFilePath));
                 return true;
             }
 
             //Checks it the content file from the new compute has been modified
-            if (!originFileInfo.getMd5().equals(newFileInfo.getMd5())) {
-                log.info(String.format("The '%s' content has changed.", originFilePath));
+            if (originFileInfo.getMd5() != null && !originFileInfo.getMd5().equals(newFileInfo.getMd5())) {
+                log.info(String.format("The content of '%s' has changed.", originFilePath));
                 return true;
             }
 
