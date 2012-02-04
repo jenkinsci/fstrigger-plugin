@@ -99,6 +99,11 @@ public class FolderContentTrigger extends AbstractTrigger {
     }
 
     @Override
+    protected Action[] getScheduledActions(Node node, XTriggerLog log) {
+        return new Action[0];
+    }
+
+    @Override
     protected boolean requiresWorkspaceForPolling() {
         return false;
     }
