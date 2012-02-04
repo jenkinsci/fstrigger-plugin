@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.service;
 
 import hudson.Util;
-import hudson.remoting.Callable;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -10,6 +9,7 @@ import org.jenkinsci.plugins.fstrigger.triggers.FileNameTrigger;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 /**
  * @author Gregory Boissinot
  */
-public class FSTriggerFileNameGetFileService implements Callable<File, XTriggerException> {
+public class FSTriggerFileNameRetriever implements Serializable {
 
     private XTriggerLog log;
 
@@ -26,7 +26,7 @@ public class FSTriggerFileNameGetFileService implements Callable<File, XTriggerE
 
     private Map<String, String> envVars;
 
-    public FSTriggerFileNameGetFileService(FileNameTriggerInfo fileInfo, XTriggerLog log, Map<String, String> envVars) {
+    public FSTriggerFileNameRetriever(FileNameTriggerInfo fileInfo, XTriggerLog log, Map<String, String> envVars) {
 
         if (log == null) {
             throw new NullPointerException("The log object must be set.");
@@ -42,7 +42,7 @@ public class FSTriggerFileNameGetFileService implements Callable<File, XTriggerE
     }
 
 
-    public File call() throws XTriggerException {
+    public File getFile() throws XTriggerException {
 
         if (fileInfo.getFilePathPattern() == null) {
             return null;

@@ -7,13 +7,15 @@ import hudson.Util;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
-import hudson.util.StreamTaskListener;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
+import org.jenkinsci.lib.envinject.EnvInjectException;
+import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
+import org.jenkinsci.lib.xtrigger.AbstractTrigger;
+import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
-import org.jenkinsci.lib.xtrigger.service.XTriggerEnvVarsResolver;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerFolderAction;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -28,7 +30,7 @@ import java.util.logging.Logger;
 /**
  * @author Gregory Boissinot
  */
-public class FolderContentTrigger extends AbstractFSTrigger {
+public class FolderContentTrigger extends AbstractTrigger {
 
     private static Logger LOGGER = Logger.getLogger(FolderContentTrigger.class.getName());
 
@@ -40,20 +42,25 @@ public class FolderContentTrigger extends AbstractFSTrigger {
     private final String path;
     private final String includes;
     private final String excludes;
-
+    private boolean excludeCheckLastModificationDate;
+    private boolean excludeCheckContent;
+    private boolean excludeCheckFewerOrMoreFiles;
 
     /**
      * Memory fields
      */
     private transient Map<String, FileInfo> md5Map = new HashMap<String, FileInfo>();
-    private transient FilePath currentSlave;
+
 
     @DataBoundConstructor
-    public FolderContentTrigger(String cronTabSpec, String path, String includes, String excludes) throws ANTLRException {
+    public FolderContentTrigger(String cronTabSpec, String path, String includes, String excludes, boolean excludeCheckLastModificationDate, boolean excludeCheckContent, boolean excludeCheckFewerOrMoreFiles) throws ANTLRException {
         super(cronTabSpec);
         this.path = Util.fixEmpty(path);
         this.includes = Util.fixEmpty(includes);
         this.excludes = Util.fixEmpty(excludes);
+        this.excludeCheckLastModificationDate = excludeCheckLastModificationDate;
+        this.excludeCheckContent = excludeCheckContent;
+        this.excludeCheckFewerOrMoreFiles = excludeCheckFewerOrMoreFiles;
     }
 
     @SuppressWarnings("unused")
@@ -71,9 +78,29 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         return excludes;
     }
 
+    @SuppressWarnings("unused")
+    public boolean isExcludeCheckLastModificationDate() {
+        return excludeCheckLastModificationDate;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isExcludeCheckContent() {
+        return excludeCheckContent;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isExcludeCheckFewerOrMoreFiles() {
+        return excludeCheckFewerOrMoreFiles;
+    }
+
     @Override
     protected File getLogFile() {
         return new File(job.getRootDir(), "trigger-polling-folder.log");
+    }
+
+    @Override
+    protected boolean requiresWorkspaceForPolling() {
+        return false;
     }
 
     class FileInfo implements Serializable {
@@ -97,12 +124,34 @@ public class FolderContentTrigger extends AbstractFSTrigger {
 
     }
 
-    private void refreshMemoryInfo(boolean startStage, XTriggerLog log) throws XTriggerException {
-        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
+    @Override
+    protected synchronized boolean checkIfModified(Node pollingNode, final XTriggerLog log) throws XTriggerException {
+
+        EnvVarsResolver varsRetriever = new EnvVarsResolver();
+        Map<String, String> envVars = null;
+        try {
+            envVars = varsRetriever.getPollingEnvVars((AbstractProject) job, pollingNode);
+        } catch (EnvInjectException e) {
+            throw new XTriggerException(e);
+        }
+
         String pathResolved = Util.replaceMacro(path, envVars);
         String includesResolved = Util.replaceMacro(includes, envVars);
         String excludesResolved = Util.replaceMacro(excludes, envVars);
-        md5Map = getMd5Map(pathResolved, includesResolved, excludesResolved, startStage, log);
+
+        //Get the current information
+        Map<String, FileInfo> newMd5Map = getMd5Map(pollingNode, pathResolved, includesResolved, excludesResolved, log);
+
+        if (offlineSlaveOnStartup) {
+            refreshMemoryInfo(newMd5Map);
+            log.info("Slave(s) were offline at startup. Waiting for next schedule to check if there are modifications.");
+            offlineSlaveOnStartup = false;
+            return false;
+        }
+
+        boolean changed = checkIfModified(pollingNode, pathResolved, log, newMd5Map);
+        refreshMemoryInfo(newMd5Map);
+        return changed;
     }
 
     private void refreshMemoryInfo(Map<String, FileInfo> newMd5Map) throws XTriggerException {
@@ -112,80 +161,42 @@ public class FolderContentTrigger extends AbstractFSTrigger {
     /**
      * Computes and gets the file information of the folder
      *
-     * @param startingStage true if the caller is the starting stage
      * @param log
      * @return the file of the folder information
      * @throws XTriggerException
      */
-    private Map<String, FileInfo> getMd5Map(String path, String includes, String excludes, boolean startingStage, XTriggerLog log) throws XTriggerException {
+    private Map<String, FileInfo> getMd5Map(Node launcherNode, final String path, final String includes, final String excludes, final XTriggerLog log) throws XTriggerException {
 
         if (path == null) {
-            log.info("A folder path must be set.");
-            return null;
-        }
-        Label label = job.getAssignedLabel();
-        if (label == null) {
-            log.info("Polling on the master");
-            return getFileInfoMaster(path, includes, excludes, log);
+            throw new XTriggerException("A folder path must be set.");
         }
 
-        log.info(String.format("Polling on all nodes for the label '%s' attached to the job.", label));
+        if (launcherNode == null) {
+            throw new XTriggerException("A node must be set.");
+        }
 
-        if (isOfflineNodes()) {
-            log.info("All slaves are offline.");
-            if (startingStage) {
-                offlineSlaveOnStartup = true;
-            }
+        if (launcherNode.getRootPath() == null) {
+            log.info("The slave is now offline. Waiting next schedule");
             return null;
         }
 
-        return getFileInfoLabel(label, log);
-    }
-
-    private Map<String, FileInfo> getFileInfoMaster(String path, String includes, String excludes, XTriggerLog log) throws XTriggerException {
-        FilePath rootPath = Hudson.getInstance().getRootPath();
-        if (rootPath == null) {
-            return null;
-        }
-
-        return getFileInfo(path, includes, excludes, log);
-    }
-
-
-    private Map<String, FileInfo> getFileInfoLabel(Label label, final XTriggerLog log) throws XTriggerException {
-
-        Set<Node> nodes = label.getNodes();
         Map<String, FileInfo> result;
-        for (Node node : nodes) {
-            FilePath nodePath = node.getRootPath();
-            if (nodePath != null) {
-                currentSlave = nodePath;
-                try {
-                    final Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, node, log);
-                    result = nodePath.act(new FilePath.FileCallable<Map<String, FileInfo>>() {
-                        public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
-                            try {
-                                String pathResolved = Util.replaceMacro(path, envVars);
-                                String includesResolved = Util.replaceMacro(includes, envVars);
-                                String excludesResolved = Util.replaceMacro(excludes, envVars);
-                                return getFileInfo(pathResolved, includesResolved, excludesResolved, log);
-                            } catch (XTriggerException fse) {
-                                throw new RuntimeException(fse);
-                            }
-                        }
-                    });
-                } catch (Throwable t) {
-                    throw new XTriggerException(t);
+        try {
+            result = launcherNode.getRootPath().act(new FilePath.FileCallable<Map<String, FileInfo>>() {
+                public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
+                    try {
+                        return getFileInfo(path, includes, excludes, log);
+                    } catch (XTriggerException fse) {
+                        throw new RuntimeException(fse);
+                    }
                 }
-
-                //We stop at first slave with file information
-                if (result != null) {
-                    return result;
-                }
-            }
+            });
+        } catch (IOException e) {
+            throw new XTriggerException(e);
+        } catch (InterruptedException e) {
+            throw new XTriggerException(e);
         }
-
-        return null;
+        return result;
     }
 
     private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes, XTriggerLog log) throws XTriggerException {
@@ -262,31 +273,11 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         return CAUSE;
     }
 
-    @Override
-    protected synchronized boolean checkIfModified(final XTriggerLog log) throws XTriggerException {
 
-        Map<String, String> envVars = new XTriggerEnvVarsResolver().getEnvVars((AbstractProject) job, Hudson.getInstance(), log);
-        String pathResolved = Util.replaceMacro(path, envVars);
-        String includesResolved = Util.replaceMacro(includes, envVars);
-        String excludesResolved = Util.replaceMacro(excludes, envVars);
+    private boolean checkIfModified(Node launcherNode, String path, final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
 
-        //Get the current information
-        Map<String, FileInfo> newMd5Map = getMd5Map(pathResolved, includesResolved, excludesResolved, false, log);
-
-        if (offlineSlaveOnStartup) {
-            refreshMemoryInfo(newMd5Map);
-            log.info("Slave(s) were offline at startup. Waiting for next schedule to check if there are modifications.");
-            offlineSlaveOnStartup = false;
-            return false;
-        }
-
-        boolean changed = checkIfModified(pathResolved, log, newMd5Map);
-        refreshMemoryInfo(newMd5Map);
-        return changed;
-    }
-
-
-    private boolean checkIfModified(String path, final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
+        assert launcherNode != null;
+        assert launcherNode.getRootPath() != null;
 
         //The folder doesn't exist anymore (or others), do not trigger the build
         if (newMd5Map == null) {
@@ -307,33 +298,29 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         }
 
         //There are more or fewer files
-        if (this.md5Map.size() != newMd5Map.size()) {
+        if (!excludeCheckFewerOrMoreFiles && this.md5Map.size() != newMd5Map.size()) {
             log.info("The folder '" + new File(path) + "' content has changed.");
             return true;
         }
 
         //Check each file
-        if (currentSlave == null) {
-            return computeEachFile(log, this.md5Map, newMd5Map);
-        } else {
-            boolean isTriggering;
-            try {
-                final Map<String, FileInfo> originMd5Map = md5Map;
-                isTriggering = currentSlave.act(new FilePath.FileCallable<Boolean>() {
-                    public Boolean invoke(File slavePath, VirtualChannel channel) throws IOException, InterruptedException {
-                        return computeEachFile(log, originMd5Map, newMd5Map);
-                    }
-                });
-            } catch (IOException ioe) {
-                throw new XTriggerException(ioe);
-            } catch (InterruptedException ie) {
-                throw new XTriggerException(ie);
-            }
-            return isTriggering;
+        boolean isTriggering;
+        try {
+            final Map<String, FileInfo> originMd5Map = md5Map;
+            isTriggering = launcherNode.getRootPath().act(new FilePath.FileCallable<Boolean>() {
+                public Boolean invoke(File slavePath, VirtualChannel channel) throws IOException, InterruptedException {
+                    return checkIfModifiedFile(log, originMd5Map, newMd5Map);
+                }
+            });
+        } catch (IOException ioe) {
+            throw new XTriggerException(ioe);
+        } catch (InterruptedException ie) {
+            throw new XTriggerException(ie);
         }
+        return isTriggering;
     }
 
-    private boolean computeEachFile(XTriggerLog log, Map<String, FileInfo> originMd5Map, Map<String, FileInfo> newMd5Map) {
+    private boolean checkIfModifiedFile(XTriggerLog log, Map<String, FileInfo> originMd5Map, Map<String, FileInfo> newMd5Map) {
 
         assert log != null;
         assert originMd5Map != null;
@@ -354,17 +341,16 @@ public class FolderContentTrigger extends AbstractFSTrigger {
             }
 
             //Checks if the file from the new compute has been modified
-            if (originFileInfo.getLastModified() != newFileInfo.getLastModified()) {
+            if (!excludeCheckLastModificationDate && (originFileInfo.getLastModified() != newFileInfo.getLastModified())) {
                 log.info(String.format("The last modification date of '%s' has changed.", originFilePath));
                 return true;
             }
 
             //Checks it the content file from the new compute has been modified
-            if (originFileInfo.getMd5() != null && !originFileInfo.getMd5().equals(newFileInfo.getMd5())) {
+            if (!excludeCheckContent && (originFileInfo.getMd5() != null && !originFileInfo.getMd5().equals(newFileInfo.getMd5()))) {
                 log.info(String.format("The content of '%s' has changed.", originFilePath));
                 return true;
             }
-
         }
 
         return false;
@@ -372,13 +358,27 @@ public class FolderContentTrigger extends AbstractFSTrigger {
     }
 
     @Override
-    public void start(BuildableItem project, boolean newInstance) {
-        super.start(project, newInstance);
+    public void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) {
+
+        EnvVarsResolver varsRetriever = new EnvVarsResolver();
+        Map<String, String> envVars = null;
+        try {
+            envVars = varsRetriever.getPollingEnvVars((AbstractProject) project, pollingNode);
+        } catch (EnvInjectException e) {
+            //Ignore the exception process, just log it
+            LOGGER.log(Level.SEVERE, e.getMessage());
+        }
+
+        String pathResolved = Util.replaceMacro(path, envVars);
+        String includesResolved = Util.replaceMacro(includes, envVars);
+        String excludesResolved = Util.replaceMacro(excludes, envVars);
+
         /**
          * Records a md5 for each file of the folder that matches includes and excludes pattern
          */
         try {
-            refreshMemoryInfo(true, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
+            Map<String, FileInfo> md5Map = getMd5Map(pollingNode, pathResolved, includesResolved, excludesResolved, log);
+            refreshMemoryInfo(md5Map);
         } catch (XTriggerException fse) {
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
             fse.printStackTrace();
@@ -386,28 +386,13 @@ public class FolderContentTrigger extends AbstractFSTrigger {
     }
 
     @Override
-    public void run() {
-        FolderContentTriggerDescriptor descriptor = getDescriptor();
-        ExecutorService executorService = descriptor.getExecutor();
-        StreamTaskListener listener;
-        try {
-            listener = new StreamTaskListener(getLogFile());
-            XTriggerLog log = new XTriggerLog(listener);
-            if (!Hudson.getInstance().isQuietingDown() && ((AbstractProject) job).isBuildable()) {
-                Runner runner = new Runner(log, "FolderTrigger");
-                executorService.execute(runner);
-            } else {
-                log.info("Jenkins is quieting down or the job is not buildable.");
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error during the trigger execution " + e.getMessage());
-            e.printStackTrace();
-        }
+    protected String getName() {
+        return "FSTrigger";
     }
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerFolderAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
+        return Collections.singleton(new FSTriggerFolderAction((AbstractProject) job, getLogFile(), this.getDescriptor().getDisplayName()));
     }
 
     @Override
@@ -417,7 +402,7 @@ public class FolderContentTrigger extends AbstractFSTrigger {
 
     @Extension
     @SuppressWarnings("unused")
-    public static class FolderContentTriggerDescriptor extends FSTriggerDescriptor {
+    public static class FolderContentTriggerDescriptor extends XTriggerDescriptor {
 
         private transient final SequentialExecutionQueue queue = new SequentialExecutionQueue(Executors.newSingleThreadExecutor());
 
@@ -433,11 +418,6 @@ public class FolderContentTrigger extends AbstractFSTrigger {
         @Override
         public String getDisplayName() {
             return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_folderContent_displayName();
-        }
-
-        @Override
-        public String getLabel() {
-            return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_folderContent_label();
         }
 
         @Override

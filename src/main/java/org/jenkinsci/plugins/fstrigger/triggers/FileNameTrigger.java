@@ -14,6 +14,8 @@ import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
+import org.jenkinsci.lib.xtrigger.AbstractTrigger;
+import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
@@ -38,7 +40,7 @@ import java.util.logging.Logger;
 /**
  * @author Gregory Boissinot
  */
-public class FileNameTrigger extends AbstractFSTrigger {
+public class FileNameTrigger extends AbstractTrigger {
 
     public static final String STRATEGY_IGNORE = "IGNORE";
     public static final String STRATEGY_LATEST = "LATEST";
@@ -47,6 +49,8 @@ public class FileNameTrigger extends AbstractFSTrigger {
     private static final String CAUSE = "Triggered by a change to a file";
 
     private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
+
+    private transient boolean offlineSlaveOnStartup = false;
 
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
@@ -64,22 +68,24 @@ public class FileNameTrigger extends AbstractFSTrigger {
     }
 
     @Override
-    public void start(BuildableItem project, boolean newInstance) {
+    protected boolean requiresWorkspaceForPolling() {
+        return false;
+    }
 
-        super.start(project, newInstance);
+    @Override
+    public void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) {
+
         try {
-            FSTriggerComputeFileService service = FSTriggerComputeFileService.getInstance();
+
+            FSTriggerComputeFileService service = new FSTriggerComputeFileService();
+
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = service.computedFile((AbstractProject) job, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
+                FilePath resolvedFile = service.computedFile(pollingNode, (AbstractProject) project, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());
                     // Initialize the memory information if whe introspect the content
                     initContentElementsIfNeed(info);
-                } else {
-                    if (isOfflineNodes()) {
-                        offlineSlaveOnStartup = true;
-                    }
                 }
             }
 
@@ -149,12 +155,10 @@ public class FileNameTrigger extends AbstractFSTrigger {
 
 
     @Override
-    protected boolean checkIfModified(final XTriggerLog log) throws XTriggerException {
+    protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
         for (FileNameTriggerInfo info : fileInfo) {
-
-            FilePath newResolvedFile = FSTriggerComputeFileService.getInstance().computedFile((AbstractProject) job, info, log);
-
+            FilePath newResolvedFile = new FSTriggerComputeFileService().computedFile(pollingNode, (AbstractProject) job, info, log);
             if (offlineSlaveOnStartup) {
                 log.info("Slave(s) were offline at startup. Waiting for next schedule to check if there are modifications.");
                 offlineSlaveOnStartup = false;
@@ -241,21 +245,8 @@ public class FileNameTrigger extends AbstractFSTrigger {
     }
 
     @Override
-    public void run() {
-        if (!Hudson.getInstance().isQuietingDown() && ((AbstractProject) job).isBuildable()) {
-            FileNameTriggerDescriptor descriptor = getDescriptor();
-            ExecutorService executorService = descriptor.getExecutor();
-            StreamTaskListener listener;
-            try {
-                listener = new StreamTaskListener(getLogFile());
-                XTriggerLog log = new XTriggerLog(listener);
-                Runner runner = new Runner(log, "FSTrigger");
-                executorService.execute(runner);
-            } catch (Throwable t) {
-                LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
-                t.printStackTrace();
-            }
-        }
+    protected String getName() {
+        return "FSTrigger";
     }
 
     @Override
@@ -265,7 +256,7 @@ public class FileNameTrigger extends AbstractFSTrigger {
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerFilesAction((AbstractProject) job, getLogFile(), this.getDescriptor().getLabel()));
+        return Collections.singleton(new FSTriggerFilesAction((AbstractProject) job, getLogFile(), this.getDescriptor().getDisplayName()));
     }
 
     @Override
@@ -275,7 +266,7 @@ public class FileNameTrigger extends AbstractFSTrigger {
 
     @Extension
     @SuppressWarnings("unused")
-    public static class FileNameTriggerDescriptor extends FSTriggerDescriptor {
+    public static class FileNameTriggerDescriptor extends XTriggerDescriptor {
 
         private transient final SequentialExecutionQueue queue = new SequentialExecutionQueue(Executors.newSingleThreadExecutor());
 
@@ -291,11 +282,6 @@ public class FileNameTrigger extends AbstractFSTrigger {
         @Override
         public String getDisplayName() {
             return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_fileNameContent_displayName();
-        }
-
-        @Override
-        public String getLabel() {
-            return org.jenkinsci.plugins.fstrigger.Messages.fstrigger_fileNameContent_label();
         }
 
         @Override

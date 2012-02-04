@@ -16,6 +16,18 @@
             <f:textbox name="excludes" value="${instance.excludes}"/>
         </f:entry>
 
+        <f:entry field="excludeCheckLastModificationDate" title="${%Exclude check lastModification date}">
+            <f:checkbox name="excludeCheckLastModificationDate" checked="${instance.excludeCheckLastModificationDate}"/>
+        </f:entry>
+
+        <f:entry field="excludeCheckContent" title="${%Exclude check content}">
+            <f:checkbox name="excludeCheckContent" checked="${instance.excludeCheckContent}"/>
+        </f:entry>
+
+        <f:entry field="excludeCheckFewerOrMoreFiles" title="${%Exclude check fewer or more files}">
+            <f:checkbox name="excludeCheckFewerOrMoreFiles" checked="${instance.excludeCheckFewerOrMoreFiles}"/>
+        </f:entry>
+
     </f:advanced>
 
     <f:entry title="${%Schedule}" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
