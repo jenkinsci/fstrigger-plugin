@@ -45,6 +45,7 @@ public class FSTriggerFileNameRetriever implements Serializable {
     public File getFile() throws XTriggerException {
 
         if (fileInfo.getFilePathPattern() == null) {
+            log.info("A file pattern must be set.");
             return null;
         }
 

@@ -10,6 +10,7 @@ import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
@@ -38,7 +39,11 @@ public class FSTriggerComputeFileService implements Serializable {
             final Map<String, String> envVars = varsRetriever.getPollingEnvVars(project, node);
             return node.getRootPath().act(new Callable<FilePath, XTriggerException>() {
                 public FilePath call() throws XTriggerException {
-                    return new FilePath(new FSTriggerFileNameRetriever(fileInfo, log, envVars).getFile());
+                    File file = new FSTriggerFileNameRetriever(fileInfo, log, envVars).getFile();
+                    if (file == null) {
+                        return null;
+                    }
+                    return new FilePath(file);
                 }
             });
 
