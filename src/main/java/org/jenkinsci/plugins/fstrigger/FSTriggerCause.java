@@ -9,6 +9,6 @@ import org.jenkinsci.lib.xtrigger.XTriggerCause;
 public class FSTriggerCause extends XTriggerCause {
 
     public FSTriggerCause(String causeFrom) {
-        super("FSTrigger", causeFrom);
+        super("FSTrigger", causeFrom, false);
     }
 }
