@@ -155,9 +155,7 @@ public class FileNameTrigger extends AbstractTrigger {
         } catch (InterruptedException ie) {
             throw new XTriggerException(ie);
         }
-
     }
-
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
