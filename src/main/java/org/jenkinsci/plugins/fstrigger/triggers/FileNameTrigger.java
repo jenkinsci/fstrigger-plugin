@@ -50,7 +50,6 @@ public class FileNameTrigger extends AbstractTrigger {
 
     private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
 
-    private transient boolean offlineSlaveOnStartup = false;
 
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
