@@ -50,7 +50,6 @@ public class FileNameTrigger extends AbstractTrigger {
 
     private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
 
-
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
         this.fileInfo = fileInfo;
@@ -159,22 +158,52 @@ public class FileNameTrigger extends AbstractTrigger {
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        for (FileNameTriggerInfo info : fileInfo) {
-            FilePath newResolvedFile = new FSTriggerComputeFileService().computedFile(pollingNode, (AbstractProject) job, info, log);
+        //1-- Compute new resolved files
+        FilePath[] resolvedFiles = getNewResolvedFiles(pollingNode, log);
+
+        //2-- Check if there are at least one change
+        boolean changeResult = checkIfThereAreAtLeastOneChange(resolvedFiles, log);
+
+        //3-- Refresh new resolved files
+        refreshNewResolvedFiles(resolvedFiles);
+
+        //4-- Return change status
+        return changeResult;
+    }
+
+
+    private FilePath[] getNewResolvedFiles(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        FilePath[] resolvedFiles = new FilePath[fileInfo.length];
+        for (int i = 0; i < fileInfo.length; i++) {
+            FileNameTriggerInfo info = fileInfo[i];
+            FilePath resolvedFile = new FSTriggerComputeFileService().computedFile(pollingNode, (AbstractProject) job, info, log);
+            resolvedFiles[i] = resolvedFile;
+        }
+        return resolvedFiles;
+    }
+
+    private boolean checkIfThereAreAtLeastOneChange(FilePath[] resolvedFiles, XTriggerLog log) throws XTriggerException {
+        for (int i = 0; i < resolvedFiles.length; i++) {
             if (offlineSlaveOnStartup) {
-                log.info("Slave(s) were offline at startup. Waiting for next schedule to check if there are modifications.");
+                log.info("No nodes were available at startup or at previous poll.");
                 offlineSlaveOnStartup = false;
-                refreshMemoryInfo(info, newResolvedFile);
-                continue;
+                return false;
             }
 
-            boolean changed = checkIfModifiedFile(newResolvedFile, info, log);
-            refreshMemoryInfo(info, newResolvedFile);
+            FileNameTriggerInfo info = fileInfo[i];
+            FilePath resolvedFile = resolvedFiles[i];
+            boolean changed = checkIfModifiedFile(resolvedFile, info, log);
             if (changed) {
                 return true;
             }
         }
         return false;
+    }
+
+    private void refreshNewResolvedFiles(FilePath[] resolvedFiles) throws XTriggerException {
+        for (int i = 0; i < resolvedFiles.length; i++) {
+            refreshMemoryInfo(fileInfo[i], resolvedFiles[i]);
+        }
     }
 
     private boolean checkIfModifiedFile(FilePath newResolvedFile, final FileNameTriggerInfo info, final XTriggerLog log) throws XTriggerException {
