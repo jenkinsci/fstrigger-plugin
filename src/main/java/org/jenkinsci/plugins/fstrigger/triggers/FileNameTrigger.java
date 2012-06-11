@@ -79,9 +79,7 @@ public class FileNameTrigger extends AbstractTrigger {
     public void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) {
 
         try {
-
             FSTriggerComputeFileService service = new FSTriggerComputeFileService();
-
             for (FileNameTriggerInfo info : fileInfo) {
                 FilePath resolvedFile = service.computedFile(pollingNode, (AbstractProject) project, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
                 if (resolvedFile != null) {
@@ -91,7 +89,6 @@ public class FileNameTrigger extends AbstractTrigger {
                     initContentElementsIfNeed(info);
                 }
             }
-
         } catch (XTriggerException fse) {
             LOGGER.log(Level.SEVERE, "Error on trigger startup " + fse.getMessage());
             fse.printStackTrace();
