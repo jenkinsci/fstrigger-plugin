@@ -4,9 +4,11 @@ import antlr.ANTLRException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
+import hudson.console.AnnotatedLargeText;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
+import org.apache.commons.jelly.XMLOutput;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
@@ -16,10 +18,11 @@ import org.jenkinsci.lib.xtrigger.AbstractTrigger;
 import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
-import org.jenkinsci.plugins.fstrigger.core.FSTriggerFolderAction;
+import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,7 +136,7 @@ public class FolderContentTrigger extends AbstractTrigger {
     protected synchronized boolean checkIfModified(Node pollingNode, final XTriggerLog log) throws XTriggerException {
 
         EnvVarsResolver varsRetriever = new EnvVarsResolver();
-        Map<String, String> envVars = null;
+        Map<String, String> envVars;
         try {
             envVars = varsRetriever.getPollingEnvVars((AbstractProject) job, pollingNode);
         } catch (EnvInjectException e) {
@@ -163,13 +166,6 @@ public class FolderContentTrigger extends AbstractTrigger {
         md5Map = newMd5Map;
     }
 
-    /**
-     * Computes and gets the file information of the folder
-     *
-     * @param log
-     * @return the file of the folder information
-     * @throws XTriggerException
-     */
     private Map<String, FileInfo> getMd5Map(Node launcherNode, final String path, final String includes, final String excludes, final XTriggerLog log) throws XTriggerException {
 
         if (path == null) {
@@ -201,6 +197,7 @@ public class FolderContentTrigger extends AbstractTrigger {
         } catch (InterruptedException e) {
             throw new XTriggerException(e);
         }
+
         return result;
     }
 
@@ -230,20 +227,19 @@ public class FolderContentTrigger extends AbstractTrigger {
         if (excludes != null) {
             dirSet.setExcludes(excludes);
         }
-        for (Iterator it = dirSet.iterator(); it.hasNext();) {
+        for (Iterator it = dirSet.iterator(); it.hasNext(); ) {
             FileResource fileResource = (FileResource) it.next();
             processDirectoryResource(log, result, fileResource);
         }
 
         //Process files
         FileSet fileSet = Util.createFileSet(new File(path), includes, excludes);
-        for (Iterator it = fileSet.iterator(); it.hasNext();) {
+        for (Iterator it = fileSet.iterator(); it.hasNext(); ) {
             FileResource fileResource = (FileResource) it.next();
             processFileResource(log, result, fileResource);
         }
         return result;
     }
-
 
     private void processDirectoryResource(XTriggerLog log, Map<String, FileInfo> result, FileResource folderResource) throws XTriggerException {
         if (!folderResource.isExists()) {
@@ -277,7 +273,6 @@ public class FolderContentTrigger extends AbstractTrigger {
     public String getCause() {
         return CAUSE;
     }
-
 
     private boolean checkIfModified(Node launcherNode, String path, final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
 
@@ -322,6 +317,7 @@ public class FolderContentTrigger extends AbstractTrigger {
         } catch (InterruptedException ie) {
             throw new XTriggerException(ie);
         }
+
         return isTriggering;
     }
 
@@ -397,12 +393,51 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerFolderAction((AbstractProject) job, getLogFile(), this.getDescriptor().getDisplayName()));
+        return Collections.singleton(new FSTriggerFolderAction(this.getDescriptor().getDisplayName()));
     }
 
     @Override
     public FolderContentTriggerDescriptor getDescriptor() {
         return (FolderContentTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+    }
+
+    public final class FSTriggerFolderAction extends FSTriggerAction {
+
+        private transient String actionTitle;
+
+        public FSTriggerFolderAction(String actionTitle) {
+            this.actionTitle = actionTitle;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "FSTrigger Folder Log";
+        }
+
+        @Override
+        public String getUrlName() {
+            return "triggerPollLogFolder";
+        }
+
+        @Override
+        public String getIconFileName() {
+            return "clipboard.gif";
+        }
+
+        @SuppressWarnings("unused")
+        public String getActionTitle() {
+            return actionTitle;
+        }
+
+        @SuppressWarnings("unused")
+        public String getLog() throws IOException {
+            return Util.loadFile(getLogFile());
+        }
+
+        @SuppressWarnings("unused")
+        public void writeLogTo(XMLOutput out) throws IOException {
+            new AnnotatedLargeText<FSTriggerFolderAction>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+        }
     }
 
     @Extension

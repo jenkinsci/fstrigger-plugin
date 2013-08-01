@@ -5,6 +5,7 @@ import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
+import hudson.console.AnnotatedLargeText;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
@@ -14,12 +15,13 @@ import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
+import org.apache.commons.jelly.XMLOutput;
 import org.jenkinsci.lib.xtrigger.AbstractTrigger;
 import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.jenkinsci.plugins.fstrigger.core.FSTriggerFilesAction;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
 import org.kohsuke.stapler.QueryParameter;
@@ -28,6 +30,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -284,12 +287,51 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new FSTriggerFilesAction((AbstractProject) job, getLogFile(), this.getDescriptor().getDisplayName()));
+        return Collections.singleton(new FSTriggerFilesAction(this.getDescriptor().getDisplayName()));
     }
 
     @Override
     public FileNameTriggerDescriptor getDescriptor() {
         return (FileNameTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+    }
+
+    public final class FSTriggerFilesAction extends FSTriggerAction {
+
+        private transient String actionTitle;
+
+        public FSTriggerFilesAction(String actionTitle) {
+            this.actionTitle = actionTitle;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "FSTrigger Files Log";
+        }
+
+        @Override
+        public String getUrlName() {
+            return "triggerPollLogFiles";
+        }
+
+        @Override
+        public String getIconFileName() {
+            return "clipboard.gif";
+        }
+
+        @SuppressWarnings("unused")
+        public String getActionTitle() {
+            return actionTitle;
+        }
+
+        @SuppressWarnings("unused")
+        public String getLog() throws IOException {
+            return Util.loadFile(getLogFile());
+        }
+
+        @SuppressWarnings("unused")
+        public void writeLogTo(XMLOutput out) throws IOException {
+            new AnnotatedLargeText<FSTriggerFilesAction>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+        }
     }
 
     @Extension

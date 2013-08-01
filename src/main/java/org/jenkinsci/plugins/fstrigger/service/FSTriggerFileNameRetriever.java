@@ -85,7 +85,7 @@ public class FSTriggerFileNameRetriever implements Serializable {
             if (FileNameTrigger.STRATEGY_LATEST.equals(fileInfo.getStrategy())) {
                 log.info("According to the checked strategy, the latest modified file has been selected for the polling.");
                 File lastModifiedFile = null;
-                for (Iterator it = fileSet.iterator(); it.hasNext();) {
+                for (Iterator it = fileSet.iterator(); it.hasNext(); ) {
                     FileResource fileResource = (FileResource) it.next();
                     File curFile = fileResource.getFile();
                     if ((lastModifiedFile == null)
