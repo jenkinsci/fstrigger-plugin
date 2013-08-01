@@ -37,7 +37,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
-        <xtrigger.lib.version>0.24</xtrigger.lib.version>
+        <xtrigger.lib.version>0.25</xtrigger.lib.version>
         <junit.version>4.8.2</junit.version>
         <mockito.version>1.8.5</mockito.version>
     </properties>
