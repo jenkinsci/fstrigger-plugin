@@ -149,7 +149,6 @@ public class XMLFileContent extends FSTriggerContentFileType {
 
         }
 
-
         return false;
     }
 
@@ -178,7 +177,7 @@ public class XMLFileContent extends FSTriggerContentFileType {
          * @param value the xpath
          * @return the form validation object
          */
-        public FormValidation doCheckXPath(@QueryParameter String value) {
+        public FormValidation doCheckXpath(@QueryParameter String value) {
 
             if (value == null || value.trim().isEmpty()) {
                 return FormValidation.error("You must provide an XPath.");

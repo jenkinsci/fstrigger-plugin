@@ -196,7 +196,7 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
          * @param value the keys
          * @return the form validation object
          */
-        public FormValidation doCheckKeys(@QueryParameter String value) {
+        public FormValidation doCheckKeys2Inspect(@QueryParameter String value) {
 
             if (value == null || value.trim().isEmpty()) {
                 return FormValidation.error("You must provide keys.");

@@ -1,5 +1,5 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
 
     <f:entry title="${descriptor.label}"
              help="/descriptor/org.jenkinsci.plugins.fstrigger.triggers.filecontent.XMLFileContent/help/type">
@@ -7,8 +7,7 @@
             <table width="100%">
                 <f:entry field="xpath" title="${%XPath}">
                     <f:textbox name="xml.expression"
-                               value="${element.expression}"
-                               checkUrl="'/descriptor/org.jenkinsci.plugins.fstrigger.triggers.filecontent.XMLFileContent/checkXPath?value='+encode(this.value)"/>
+                               value="${element.expression}"/>
                 </f:entry>
             </table>
         </f:repeatable>
