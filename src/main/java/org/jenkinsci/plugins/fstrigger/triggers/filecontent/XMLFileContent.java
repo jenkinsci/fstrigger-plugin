@@ -49,7 +49,7 @@ public class XMLFileContent extends FSTriggerContentFileType {
 
     @Override
     public void setMemoryInfo(Object memoryInfo) {
-        if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
+        if ((memoryInfo != null) && !(memoryInfo instanceof Map)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a Map object.", memoryInfo));
         }
         this.results = (Map) memoryInfo;
