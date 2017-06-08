@@ -4,6 +4,7 @@ import hudson.FilePath;
 import hudson.model.AbstractProject;
 import hudson.model.Node;
 import hudson.remoting.Callable;
+import jenkins.security.MasterToSlaveCallable;
 import org.jenkinsci.lib.envinject.EnvInjectException;
 import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -37,7 +38,7 @@ public class FSTriggerComputeFileService implements Serializable {
         EnvVarsResolver varsRetriever = new EnvVarsResolver();
         try {
             final Map<String, String> envVars = varsRetriever.getPollingEnvVars(project, node);
-            return node.getRootPath().act(new Callable<FilePath, XTriggerException>() {
+            return node.getRootPath().act(new MasterToSlaveCallable<FilePath, XTriggerException>() {
                 public FilePath call() throws XTriggerException {
                     File file = new FSTriggerFileNameRetriever(fileInfo, log, envVars).getFile();
                     if (file == null) {
@@ -49,7 +50,6 @@ public class FSTriggerComputeFileService implements Serializable {
 
         } catch (EnvInjectException e) {
             throw new XTriggerException(e);
-
         } catch (IOException e) {
             throw new XTriggerException(e);
         } catch (InterruptedException e) {

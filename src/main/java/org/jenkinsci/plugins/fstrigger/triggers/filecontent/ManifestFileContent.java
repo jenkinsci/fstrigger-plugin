@@ -18,7 +18,6 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
 
     protected transient Attributes attributes;
 
-    @DataBoundConstructor
     public ManifestFileContent(String keys2Inspect, boolean allKeys) {
         super(keys2Inspect, allKeys);
     }

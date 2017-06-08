@@ -8,6 +8,8 @@ import hudson.console.AnnotatedLargeText;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
+import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import org.apache.commons.jelly.XMLOutput;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
@@ -183,7 +185,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
         Map<String, FileInfo> result;
         try {
-            result = launcherNode.getRootPath().act(new FilePath.FileCallable<Map<String, FileInfo>>() {
+            result = launcherNode.getRootPath().act(new MasterToSlaveFileCallable<Map<String,FileInfo>>() {
                 public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
                         return getFileInfo(path, includes, excludes, log);
@@ -307,7 +309,7 @@ public class FolderContentTrigger extends AbstractTrigger {
         boolean isTriggering;
         try {
             final Map<String, FileInfo> originMd5Map = md5Map;
-            isTriggering = launcherNode.getRootPath().act(new FilePath.FileCallable<Boolean>() {
+            isTriggering = launcherNode.getRootPath().act(new MasterToSlaveFileCallable<Boolean>() {
                 public Boolean invoke(File slavePath, VirtualChannel channel) throws IOException, InterruptedException {
                     return checkIfModifiedFile(log, originMd5Map, newMd5Map);
                 }
@@ -398,7 +400,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     @Override
     public FolderContentTriggerDescriptor getDescriptor() {
-        return (FolderContentTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (FolderContentTriggerDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 
     public final class FSTriggerFolderAction extends FSTriggerAction {

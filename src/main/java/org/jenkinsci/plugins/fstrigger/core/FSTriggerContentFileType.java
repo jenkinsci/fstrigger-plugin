@@ -3,7 +3,7 @@ package org.jenkinsci.plugins.fstrigger.core;
 import hudson.ExtensionPoint;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 
@@ -63,7 +63,7 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
     }
 
     public Descriptor<FSTriggerContentFileType> getDescriptor() {
-        return (FSTriggerContentFileTypeDescriptor) Hudson.getInstance().getDescriptor(getClass());
+        return (FSTriggerContentFileTypeDescriptor) Jenkins.getActiveInstance().getDescriptor(getClass());
     }
 
     /**
