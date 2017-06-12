@@ -1,8 +1,9 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.org.apache.tools.tar.TarInputStream;
-import org.apache.tools.tar.TarEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
@@ -22,8 +23,10 @@ import java.util.List;
  */
 public class TarFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
 
-    protected transient List<TarEntry> tarEntries = new ArrayList<TarEntry>();
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
+    protected transient List<TarArchiveEntry> tarEntries = new ArrayList<>();
 
     private transient StringBuilder tarContent;
 
@@ -61,24 +64,21 @@ public class TarFileContent extends FSTriggerContentFileType {
     }
 
 
-    private List<TarEntry> getTarEntries(File file) throws IOException {
-
-        List<TarEntry> result = new ArrayList<TarEntry>();
-        FileInputStream fis = new FileInputStream(file);
-        TarInputStream tarInputStream = new TarInputStream(fis);
-        TarEntry tarEntry;
-        while ((tarEntry = tarInputStream.getNextEntry()) != null) {
-            result.add(tarEntry);
+    private List<TarArchiveEntry> getTarEntries(File file) throws IOException {
+        List<TarArchiveEntry> result = new ArrayList<>();
+        try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new FileInputStream(file))) {
+            TarArchiveEntry tarEntry;
+            while ((tarEntry = tarInputStream.getNextTarEntry()) != null) {
+                result.add(tarEntry);
+            }
         }
-        fis.close();
-
         return result;
     }
 
     @Override
     protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
-        List<TarEntry> newTarEntries;
+        List<TarArchiveEntry> newTarEntries;
         try {
             newTarEntries = getTarEntries(file);
 
@@ -90,12 +90,12 @@ public class TarFileContent extends FSTriggerContentFileType {
 
             //Initiated to true for detecting when the two zip files has not the same number of elements
             boolean changed = true;
-            Iterator<TarEntry> tarEntryIterator = tarEntries.iterator();
-            Iterator<TarEntry> newTarEntryIterator = newTarEntries.iterator();
+            Iterator<TarArchiveEntry> tarEntryIterator = tarEntries.iterator();
+            Iterator<TarArchiveEntry> newTarEntryIterator = newTarEntries.iterator();
             while (tarEntryIterator.hasNext() && newTarEntryIterator.hasNext()) {
 
-                TarEntry initTarEntry = tarEntryIterator.next();
-                TarEntry newTarEntry = newTarEntryIterator.next();
+                TarArchiveEntry initTarEntry = tarEntryIterator.next();
+                TarArchiveEntry newTarEntry = newTarEntryIterator.next();
 
                 if (initTarEntry == null) {
                     return true;
@@ -177,7 +177,7 @@ public class TarFileContent extends FSTriggerContentFileType {
         }
     }
 
-    private String displayTarEntries(List<TarEntry> newTarEntries) {
+    private String displayTarEntries(List<TarArchiveEntry> newTarEntries) {
 
         StringBuilder sb = new StringBuilder();
         sb.append("The content of the tar file has changed.\n");
@@ -188,9 +188,9 @@ public class TarFileContent extends FSTriggerContentFileType {
         return sb.toString();
     }
 
-    private void fillTarContent(List<TarEntry> newTarEntries, StringBuilder sb) {
+    private void fillTarContent(List<TarArchiveEntry> newTarEntries, StringBuilder sb) {
 
-        for (TarEntry tarEntry : newTarEntries) {
+        for (TarArchiveEntry tarEntry : newTarEntries) {
             Object[] elements = new Object[]{
                     "Name:" + tarEntry.getName(),
                     "Size:" + tarEntry.getSize(),

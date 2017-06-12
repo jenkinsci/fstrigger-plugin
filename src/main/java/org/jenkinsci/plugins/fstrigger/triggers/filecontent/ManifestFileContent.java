@@ -16,9 +16,10 @@ import java.util.jar.Manifest;
  */
 public abstract class ManifestFileContent extends PropertiesFileContent {
 
+    private static final long serialVersionUID = 1L;
+
     protected transient Attributes attributes;
 
-    @DataBoundConstructor
     public ManifestFileContent(String keys2Inspect, boolean allKeys) {
         super(keys2Inspect, allKeys);
     }
@@ -105,10 +106,6 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
         }
 
         Attributes newAttributes = computeAttributesObject(file);
-        if (newAttributes == null) {
-            return false;
-        }
-
         if (attributes.size() != newAttributes.size()) {
             String msg = String.format("The new content file contains %d attribute(s) whereas the previous content contains %d attribute(s)", newAttributes.size(), attributes.size());
             log.info(msg);

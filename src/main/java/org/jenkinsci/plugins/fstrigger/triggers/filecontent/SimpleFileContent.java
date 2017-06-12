@@ -19,6 +19,8 @@ import java.io.IOException;
  */
 public class SimpleFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Memory field for detection
      */

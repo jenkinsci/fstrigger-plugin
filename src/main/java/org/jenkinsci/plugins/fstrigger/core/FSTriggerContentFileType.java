@@ -3,7 +3,7 @@ package org.jenkinsci.plugins.fstrigger.core;
 import hudson.ExtensionPoint;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 
@@ -14,6 +14,8 @@ import java.io.Serializable;
  * @author Gregory Boissinot
  */
 public abstract class FSTriggerContentFileType implements ExtensionPoint, Describable<FSTriggerContentFileType>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The current job name
@@ -26,7 +28,7 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
      *
      * @param jobName the current job name
      * @param file    the current file to inspect
-     * @throws XTriggerException
+     * @throws XTriggerException if the given file DNE
      */
     public void initMemoryFields(String jobName, File file) throws XTriggerException {
         this.jobName = jobName;
@@ -48,7 +50,7 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
      * @param file the current file to check
      * @param log  the log object
      * @return true if we need to schedule a job, false otherwise
-     * @throws XTriggerException
+     * @throws XTriggerException if the given file DNE
      */
     public boolean isTriggeringBuild(File file, XTriggerLog log) throws XTriggerException {
 
@@ -63,12 +65,14 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
     }
 
     public Descriptor<FSTriggerContentFileType> getDescriptor() {
-        return (FSTriggerContentFileTypeDescriptor) Hudson.getInstance().getDescriptor(getClass());
+        return (FSTriggerContentFileTypeDescriptor) Jenkins.getActiveInstance().getDescriptor(getClass());
     }
 
     /**
      * Cycle of the trigger
      * These methods have to be overridden in each trigger implementation
+     * @param file the file to init with
+     * @throws XTriggerException if there is an error initializing
      */
     protected abstract void initForContent(File file) throws XTriggerException;
 
@@ -78,6 +82,7 @@ public abstract class FSTriggerContentFileType implements ExtensionPoint, Descri
     /**
      * Used by caller trigger for transferring objects between objects
      * between master and slave
+     * @return the memory info to transfer
      */
     public abstract Object getMemoryInfo();
 

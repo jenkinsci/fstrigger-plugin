@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
  */
 public class TextFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
     private List<TextFileContentEntry> regexElements = new ArrayList<TextFileContentEntry>();
 
     @DataBoundConstructor
@@ -54,10 +56,10 @@ public class TextFileContent extends FSTriggerContentFileType {
     @Override
     protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
-        FileReader fileReader = null;
+        InputStreamReader fileReader = null;
         BufferedReader bufferedReader = null;
         try {
-            fileReader = new FileReader(file);
+            fileReader = new InputStreamReader(new FileInputStream(file), "UTF-8");
             bufferedReader = new BufferedReader(fileReader);
             String line;
             //Check line by line if a pattern matches

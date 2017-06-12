@@ -15,6 +15,8 @@ import java.util.jar.Manifest;
  */
 public class SourceManifestFileContent extends ManifestFileContent {
 
+    private static final long serialVersionUID = 1L;
+
     @DataBoundConstructor
     @SuppressWarnings("unused")
     public SourceManifestFileContent(String keys2Inspect, boolean allKeys) {

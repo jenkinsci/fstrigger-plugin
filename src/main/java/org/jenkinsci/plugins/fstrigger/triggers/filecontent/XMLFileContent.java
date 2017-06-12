@@ -29,6 +29,8 @@ import java.util.Map;
  */
 public class XMLFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
     private transient Map<String, Object> results;
 
     private transient Document xmlDocument;
@@ -127,22 +129,17 @@ public class XMLFileContent extends FSTriggerContentFileType {
             Object initValue = entry.getValue();
             Object newValue = newResults.get(expression);
 
-            if (initValue == null && newValue == null) {
-                log.info(String.format("There is no matching for the expression '%s'.", expression));
-                continue;
-            }
-
-            if (initValue == null && newValue != null) {
-                log.info(String.format("There was no value and there is a new value for the expression '%s'.", expression));
-                return true;
-            }
-
-            if (initValue != null && newValue == null) {
-                log.info(String.format("There was a value and now the there is no value for the expression '%s'.", expression));
-                return true;
-            }
-
-            if (!initValue.equals(newValue)) {
+            if (initValue == null || newValue == null) {
+                if (initValue != null) {
+                    log.info(String.format("There was a value and now the there is no value for the expression '%s'.", expression));
+                    return true;
+                } else if (newValue != null) {
+                    log.info(String.format("There was no value and there is a new value for the expression '%s'.", expression));
+                } else {
+                    log.info(String.format("There is no matching for the expression '%s'.", expression));
+                    continue;
+                }
+            } else if (!initValue.equals(newValue)) {
                 log.info(String.format("The value for the expression '%s' has changed.", expression));
                 return true;
             }

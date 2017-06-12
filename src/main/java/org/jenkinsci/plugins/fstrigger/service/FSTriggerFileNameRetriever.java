@@ -20,6 +20,8 @@ import java.util.regex.Matcher;
  */
 public class FSTriggerFileNameRetriever implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private XTriggerLog log;
 
     private FileNameTriggerInfo fileInfo;
@@ -109,7 +111,7 @@ public class FSTriggerFileNameRetriever implements Serializable {
         return null;
     }
 
-    class FileNameExtractInfo {
+    private static class FileNameExtractInfo {
 
         private String rootDir;
 

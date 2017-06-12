@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.triggers;
 
 import antlr.ANTLRException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
@@ -8,6 +9,8 @@ import hudson.console.AnnotatedLargeText;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
+import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import org.apache.commons.jelly.XMLOutput;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
@@ -35,6 +38,8 @@ import java.util.logging.Logger;
  */
 public class FolderContentTrigger extends AbstractTrigger {
 
+    private static final long serialVersionUID = 1L;
+
     private static Logger LOGGER = Logger.getLogger(FolderContentTrigger.class.getName());
 
     private static final String CAUSE = "Triggered by a change to a folder";
@@ -52,6 +57,7 @@ public class FolderContentTrigger extends AbstractTrigger {
     /**
      * Memory fields
      */
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
     private transient Map<String, FileInfo> md5Map = new HashMap<String, FileInfo>();
 
 
@@ -111,10 +117,10 @@ public class FolderContentTrigger extends AbstractTrigger {
         return false;
     }
 
-    class FileInfo implements Serializable {
+    private static final class FileInfo implements Serializable {
 
+        private final static long serialVersionUID = 1L;
         private final String md5;
-
         private final long lastModified;
 
         public FileInfo(String md5, long lastModified) {
@@ -176,14 +182,15 @@ public class FolderContentTrigger extends AbstractTrigger {
             throw new XTriggerException("A node must be set.");
         }
 
-        if (launcherNode.getRootPath() == null) {
+        FilePath rootPath;
+        if ((rootPath = launcherNode.getRootPath()) == null) {
             log.info("The slave is now offline. Waiting next schedule");
             return null;
         }
 
         Map<String, FileInfo> result;
         try {
-            result = launcherNode.getRootPath().act(new FilePath.FileCallable<Map<String, FileInfo>>() {
+            result = rootPath.act(new MasterToSlaveFileCallable<Map<String,FileInfo>>() {
                 public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
                         return getFileInfo(path, includes, excludes, log);
@@ -192,9 +199,7 @@ public class FolderContentTrigger extends AbstractTrigger {
                     }
                 }
             });
-        } catch (IOException e) {
-            throw new XTriggerException(e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             throw new XTriggerException(e);
         }
 
@@ -203,7 +208,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes, XTriggerLog log) throws XTriggerException {
 
-        log.info(String.format("\nTrying to monitor the folder '%s'", path));
+        log.info(String.format("%nTrying to monitor the folder '%s'", path));
 
         File folder = new File(path);
         if (!folder.exists()) {
@@ -243,7 +248,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private void processDirectoryResource(XTriggerLog log, Map<String, FileInfo> result, FileResource folderResource) throws XTriggerException {
         if (!folderResource.isExists()) {
-            log.info(String.format("\nThe folder '%s' doesn't exist anymore ", folderResource.getFile().getPath()));
+            log.info(String.format("%nThe folder '%s' doesn't exist anymore ", folderResource.getFile().getPath()));
         } else {
             FileInfo fileInfo = new FileInfo(null, folderResource.getLastModified());
             result.put(folderResource.getFile().getAbsolutePath(), fileInfo);
@@ -252,7 +257,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private void processFileResource(XTriggerLog log, Map<String, FileInfo> result, FileResource fileResource) throws XTriggerException {
         if (!fileResource.isExists()) {
-            log.info(String.format("\nThe file '%s' doesn't exist anymore ", fileResource.getFile().getPath()));
+            log.info(String.format("%nThe file '%s' doesn't exist anymore ", fileResource.getFile().getPath()));
         } else {
             String currentMd5;
             try {
@@ -276,8 +281,10 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private boolean checkIfModified(Node launcherNode, String path, final XTriggerLog log, final Map<String, FileInfo> newMd5Map) throws XTriggerException {
 
-        assert launcherNode != null;
-        assert launcherNode.getRootPath() != null;
+        FilePath rootPath;
+        if (launcherNode == null || (rootPath = launcherNode.getRootPath()) == null) {
+            throw new XTriggerException("A valid node must be set.");
+        }
 
         //The folder doesn't exist anymore (or others), do not trigger the build
         if (newMd5Map == null) {
@@ -307,7 +314,7 @@ public class FolderContentTrigger extends AbstractTrigger {
         boolean isTriggering;
         try {
             final Map<String, FileInfo> originMd5Map = md5Map;
-            isTriggering = launcherNode.getRootPath().act(new FilePath.FileCallable<Boolean>() {
+            isTriggering = rootPath.act(new MasterToSlaveFileCallable<Boolean>() {
                 public Boolean invoke(File slavePath, VirtualChannel channel) throws IOException, InterruptedException {
                     return checkIfModifiedFile(log, originMd5Map, newMd5Map);
                 }
@@ -398,7 +405,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     @Override
     public FolderContentTriggerDescriptor getDescriptor() {
-        return (FolderContentTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (FolderContentTriggerDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 
     public final class FSTriggerFolderAction extends FSTriggerAction {

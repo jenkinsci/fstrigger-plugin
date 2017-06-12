@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.Util;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -19,6 +20,9 @@ import java.util.zip.ZipFile;
  */
 public class ZIPFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
     protected transient List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
 
     private transient StringBuilder zipContent;
@@ -38,9 +42,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
         if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
-        if (memoryInfo instanceof List) {
-            this.zipEntries = (List) memoryInfo;
-        }
+        this.zipEntries = (List) memoryInfo;
     }
 
     private List<ZipEntry> getListZipEntries(Enumeration<? extends ZipEntry> entriesEnumeration) {
@@ -58,7 +60,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
             zipContent = new StringBuilder();
             fillZipContent(zipFile.entries(), zipContent);
             zipEntries = getListZipEntries(zipFile.entries());
-
+            zipFile.close();
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
         }
@@ -68,8 +70,8 @@ public class ZIPFileContent extends FSTriggerContentFileType {
     protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         List<ZipEntry> newZipEntries;
-        try {
-            ZipFile zipFile = new ZipFile(file);
+        try (ZipFile zipFile = new ZipFile(file)) {
+
             newZipEntries = getListZipEntries(zipFile.entries());
 
             //Initiated to true for detecting when the two zip files has not the same number of elements
@@ -128,8 +130,8 @@ public class ZIPFileContent extends FSTriggerContentFileType {
                 } else if (initBytes == null || newBytes == null) {
                     changedMd5 = true;
                 } else {
-                    String initMd5 = Util.getDigestOf(new String(initZipEntry.getExtra()));
-                    String newMd5 = Util.getDigestOf(new String(newZipEntry.getExtra()));
+                    String initMd5 = new String(initZipEntry.getExtra(), "UTF-8");
+                    String newMd5 = new String(newZipEntry.getExtra(),  "UTF-8");
                     changedMd5 = !initMd5.equals(newMd5);
                 }
                 if (changedMd5) {
@@ -143,7 +145,6 @@ public class ZIPFileContent extends FSTriggerContentFileType {
 
             //Returns true if a logical expression has changed
             return changed;
-
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
         }

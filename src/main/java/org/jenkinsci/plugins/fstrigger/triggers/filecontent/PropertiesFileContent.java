@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
@@ -10,10 +11,7 @@ import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,6 +19,8 @@ import java.util.Properties;
  * @author Gregory Boissinot
  */
 public class PropertiesFileContent extends FSTriggerContentFileType {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * GUI fields
@@ -33,6 +33,7 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
     /**
      * Memory fields for detection
      */
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
     private transient Properties properties = new Properties();
 
     @DataBoundConstructor
@@ -101,7 +102,7 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
 
         Properties propsReader = new Properties();
         try {
-            Reader reader = new FileReader(file);
+            Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
             propsReader.load(reader);
             reader.close();
         } catch (IOException ioe) {
