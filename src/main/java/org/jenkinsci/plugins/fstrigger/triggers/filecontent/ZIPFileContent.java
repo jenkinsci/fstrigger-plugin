@@ -19,6 +19,8 @@ import java.util.zip.ZipFile;
  */
 public class ZIPFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
     protected transient List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
 
     private transient StringBuilder zipContent;
@@ -58,7 +60,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
             zipContent = new StringBuilder();
             fillZipContent(zipFile.entries(), zipContent);
             zipEntries = getListZipEntries(zipFile.entries());
-
+            zipFile.close();
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
         }
@@ -68,8 +70,8 @@ public class ZIPFileContent extends FSTriggerContentFileType {
     protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         List<ZipEntry> newZipEntries;
-        try {
-            ZipFile zipFile = new ZipFile(file);
+        try (ZipFile zipFile = new ZipFile(file)) {
+
             newZipEntries = getListZipEntries(zipFile.entries());
 
             //Initiated to true for detecting when the two zip files has not the same number of elements
@@ -143,7 +145,6 @@ public class ZIPFileContent extends FSTriggerContentFileType {
 
             //Returns true if a logical expression has changed
             return changed;
-
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
         }

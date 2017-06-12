@@ -22,6 +22,7 @@ import java.util.List;
  */
 public class TarFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
 
     protected transient List<TarEntry> tarEntries = new ArrayList<TarEntry>();
 

@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public class XMLFileContentEntry implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private String expression;
 
     @DataBoundConstructor

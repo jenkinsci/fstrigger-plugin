@@ -16,6 +16,8 @@ import java.util.jar.Manifest;
  */
 public abstract class ManifestFileContent extends PropertiesFileContent {
 
+    private static final long serialVersionUID = 1L;
+
     protected transient Attributes attributes;
 
     public ManifestFileContent(String keys2Inspect, boolean allKeys) {

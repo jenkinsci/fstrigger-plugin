@@ -15,6 +15,8 @@ import java.util.jar.Manifest;
  */
 public class JARManifestFileContent extends ManifestFileContent {
 
+    private static final long serialVersionUID = 1L;
+
     @DataBoundConstructor
     @SuppressWarnings("unused")
     public JARManifestFileContent(String keys2Inspect, boolean allKeys) {
@@ -23,8 +25,7 @@ public class JARManifestFileContent extends ManifestFileContent {
 
     @Override
     protected Manifest getManifest(File file) {
-        try {
-            JarFile jarFile = new JarFile(file);
+        try (JarFile jarFile = new JarFile(file)) {
             return jarFile.getManifest();
         } catch (IOException ioe) {
             return null;

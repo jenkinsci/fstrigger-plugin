@@ -29,6 +29,8 @@ import java.util.Map;
  */
 public class XMLFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
     private transient Map<String, Object> results;
 
     private transient Document xmlDocument;

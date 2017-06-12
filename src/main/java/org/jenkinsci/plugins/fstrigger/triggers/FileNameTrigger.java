@@ -26,7 +26,6 @@ import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
-import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -34,10 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -47,6 +43,8 @@ import java.util.logging.Logger;
  * @author Gregory Boissinot
  */
 public class FileNameTrigger extends AbstractTrigger {
+
+    private static final long serialVersionUID = 1L;
 
     public static final String STRATEGY_IGNORE = "IGNORE";
     public static final String STRATEGY_LATEST = "LATEST";
@@ -58,12 +56,12 @@ public class FileNameTrigger extends AbstractTrigger {
 
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
-        this.fileInfo = fileInfo;
+        this.fileInfo = Arrays.copyOf(fileInfo, fileInfo.length);
     }
 
     @SuppressWarnings("unused")
     public FileNameTriggerInfo[] getFileInfo() {
-        return fileInfo;
+        return Arrays.copyOf(fileInfo, fileInfo.length);
     }
 
     @Override
@@ -127,12 +125,8 @@ public class FileNameTrigger extends AbstractTrigger {
                                     }
                                 });
                                 type.setMemoryInfo(memoryInfo);
-                            } catch (IOException ioe) {
-                                throw new XTriggerException(ioe);
-                            } catch (InterruptedException ie) {
-                                throw new XTriggerException(ie);
-                            } catch (Throwable t) {
-                                throw new XTriggerException(t);
+                            } catch (IOException | InterruptedException e) {
+                                throw new XTriggerException(e);
                             }
                         }
                     }
@@ -268,11 +262,7 @@ public class FileNameTrigger extends AbstractTrigger {
             }
 
 
-        } catch (IOException ioe) {
-            throw new XTriggerException(ioe);
-        } catch (InterruptedException ie) {
-            throw new XTriggerException(ie);
-        } catch (Throwable e) {
+        } catch (IOException | InterruptedException e) {
             throw new XTriggerException(e);
         }
         return false;
@@ -522,7 +512,7 @@ public class FileNameTrigger extends AbstractTrigger {
     @SuppressWarnings({"unused", "deprecation"})
     @Deprecated
     public FSTriggerContentFileType[] getContentFileTypes() {
-        return contentFileTypes;
+        return Arrays.copyOf(contentFileTypes, contentFileTypes.length);
     }
 
     @SuppressWarnings({"unused", "deprecation"})

@@ -22,23 +22,30 @@ import java.util.Map;
  */
 public class FSTriggerComputeFileService implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Gets the file to poll
      *
-     * @param fileInfo
+     * @param node the node that the file is on
+     * @param project the FSTrigger's project
+     * @param fileInfo the FileNameTriggerInfo of the file
+     * @param log the XTrigger logger
      * @return a FilePath object to the file, null if the object can't be determined or doesn't exist
-     * @throws XTriggerException
+     * @throws XTriggerException if the node is invalid or offline
      */
     public FilePath computedFile(Node node, AbstractProject project, final FileNameTriggerInfo fileInfo, final XTriggerLog log) throws XTriggerException {
 
-        if (node == null || node.getRootPath() == null) {
+        FilePath rootPath;
+        if (node == null || (rootPath = node.getRootPath()) == null) {
             throw new XTriggerException("A valid node must be set.");
         }
 
         EnvVarsResolver varsRetriever = new EnvVarsResolver();
         try {
             final Map<String, String> envVars = varsRetriever.getPollingEnvVars(project, node);
-            return node.getRootPath().act(new MasterToSlaveCallable<FilePath, XTriggerException>() {
+                                // file to poll could be on slave
+            return rootPath.act(new MasterToSlaveCallable<FilePath, XTriggerException>() {
                 public FilePath call() throws XTriggerException {
                     File file = new FSTriggerFileNameRetriever(fileInfo, log, envVars).getFile();
                     if (file == null) {
@@ -48,11 +55,7 @@ public class FSTriggerComputeFileService implements Serializable {
                 }
             });
 
-        } catch (EnvInjectException e) {
-            throw new XTriggerException(e);
-        } catch (IOException e) {
-            throw new XTriggerException(e);
-        } catch (InterruptedException e) {
+        } catch (EnvInjectException | IOException | InterruptedException e) {
             throw new XTriggerException(e);
         }
     }

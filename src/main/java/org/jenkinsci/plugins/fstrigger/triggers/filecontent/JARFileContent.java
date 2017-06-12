@@ -10,6 +10,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class JARFileContent extends ZIPFileContent {
 
+    private static final long serialVersionUID = 1L;
+
     @DataBoundConstructor
     @SuppressWarnings("unused")
     public JARFileContent() {

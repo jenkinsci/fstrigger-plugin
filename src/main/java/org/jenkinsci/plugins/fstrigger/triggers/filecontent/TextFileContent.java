@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
  */
 public class TextFileContent extends FSTriggerContentFileType {
 
+    private static final long serialVersionUID = 1L;
+
     private List<TextFileContentEntry> regexElements = new ArrayList<TextFileContentEntry>();
 
     @DataBoundConstructor
