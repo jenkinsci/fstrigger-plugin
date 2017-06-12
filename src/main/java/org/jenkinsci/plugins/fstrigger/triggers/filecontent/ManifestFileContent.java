@@ -106,10 +106,6 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
         }
 
         Attributes newAttributes = computeAttributesObject(file);
-        if (newAttributes == null) {
-            return false;
-        }
-
         if (attributes.size() != newAttributes.size()) {
             String msg = String.format("The new content file contains %d attribute(s) whereas the previous content contains %d attribute(s)", newAttributes.size(), attributes.size());
             log.info(msg);

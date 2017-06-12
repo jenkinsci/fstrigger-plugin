@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.fstrigger.triggers;
 
 import antlr.ANTLRException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
@@ -56,6 +57,7 @@ public class FolderContentTrigger extends AbstractTrigger {
     /**
      * Memory fields
      */
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
     private transient Map<String, FileInfo> md5Map = new HashMap<String, FileInfo>();
 
 
@@ -115,10 +117,10 @@ public class FolderContentTrigger extends AbstractTrigger {
         return false;
     }
 
-    class FileInfo implements Serializable {
+    private static final class FileInfo implements Serializable {
 
+        private final static long serialVersionUID = 1L;
         private final String md5;
-
         private final long lastModified;
 
         public FileInfo(String md5, long lastModified) {

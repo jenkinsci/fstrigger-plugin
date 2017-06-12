@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.Util;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -21,6 +22,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
 
     private static final long serialVersionUID = 1L;
 
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
     protected transient List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
 
     private transient StringBuilder zipContent;
@@ -40,9 +42,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
         if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
-        if (memoryInfo instanceof List) {
-            this.zipEntries = (List) memoryInfo;
-        }
+        this.zipEntries = (List) memoryInfo;
     }
 
     private List<ZipEntry> getListZipEntries(Enumeration<? extends ZipEntry> entriesEnumeration) {
@@ -130,8 +130,8 @@ public class ZIPFileContent extends FSTriggerContentFileType {
                 } else if (initBytes == null || newBytes == null) {
                     changedMd5 = true;
                 } else {
-                    String initMd5 = Util.getDigestOf(new String(initZipEntry.getExtra()));
-                    String newMd5 = Util.getDigestOf(new String(newZipEntry.getExtra()));
+                    String initMd5 = new String(initZipEntry.getExtra(), "UTF-8");
+                    String newMd5 = new String(newZipEntry.getExtra(),  "UTF-8");
                     changedMd5 = !initMd5.equals(newMd5);
                 }
                 if (changedMd5) {
