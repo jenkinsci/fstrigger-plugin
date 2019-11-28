@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.554.1</version>
+        <version>3.54</version>
     </parent>
 
     <artifactId>fstrigger</artifactId>
@@ -35,11 +35,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-        <xtrigger.lib.version>0.29</xtrigger.lib.version>
-        <junit.version>4.8.2</junit.version>
-        <mockito.version>1.8.5</mockito.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <xtrigger.lib.version>0.34</xtrigger.lib.version>
+        <matrix.project.version>1.14</matrix.project.version>
+        <junit.version>4.12</junit.version>
+        <mockito.version>1.10.19</mockito.version>
+        <java.level>8</java.level>
+        <jenkins.version>2.176.4</jenkins.version>
     </properties>
 
     <dependencies>
@@ -48,6 +51,12 @@
             <groupId>org.jenkins-ci.lib</groupId>
             <artifactId>xtrigger-lib</artifactId>
             <version>${xtrigger.lib.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-project</artifactId>
+            <version>${matrix.project.version}</version>
         </dependency>
 
         <dependency>
