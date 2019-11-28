@@ -1,8 +1,9 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
-import hudson.org.apache.tools.tar.TarInputStream;
+
 import org.apache.tools.tar.TarEntry;
+import org.apache.tools.tar.TarInputStream;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
