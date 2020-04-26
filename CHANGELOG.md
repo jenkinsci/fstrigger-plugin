@@ -29,14 +29,14 @@ Unknown field 'logEnabled' in org.jenkinsci.lib.xtrigger.XTriggerCause
 * Fix
 [JENKINS-16809](https://issues.jenkins-ci.org/browse/JENKINS-16809) -
 Plugins FSTrigger/Envinject, NPE while loading jobs  
-* Update to xtrigger-lib 0.20  
-* Update to envinject-lib 1.17
+  * Update to xtrigger-lib 0.20  
+  * Update to envinject-lib 1.17
 
 ## Release 0.34
 
 * Fix NullPointerException on polling action  
-  * Upgrade to envinject-lib 1.11  
-  * Upgrade to xtrigger-lib 0.18
+* Upgrade to envinject-lib 1.11  
+* Upgrade to xtrigger-lib 0.18
 
 ## Release 0.33
 
