@@ -3,11 +3,6 @@
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/fstrigger.svg)](https://plugins.jenkins.io/fstrigger)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/fstrigger.svg?color=blue)](https://plugins.jenkins.io/fstrigger)
 
-
-**This plugin is up for adoption.** Want to help improve this plugin?
-[Click here to learn
-more](https://wiki.jenkins.io/display/JENKINS/Adopt+a+Plugin "Adopt a Plugin")!
-
 FSTrigger provides polling mechanisms to monitor a file system and
 trigger a build if a file or a set of files have changed.
 
@@ -91,9 +86,9 @@ Both jobs are independents and listen external events.
 
 # Other similar plugins
 
-\* If you want just to know if a set of files exists and display the
+If you want just to know if a set of files exists and display the
 number of files found, you can use [Files Found
-Trigger](https://wiki.jenkins.io/display/JENKINS/Files+Found+Trigger)
+Trigger](https://plugins.jenkins.io/files-found-trigger/)
 plugin.
 
 # Known Limitations
@@ -103,9 +98,8 @@ example, we can't get similar performance as with Python. Therefore, we
 recommend to not use FSTrigger plugin when you want to poll a directory
 with a large set of files.
 
-The current code does not work with Pipeline projects.  [
-JENKINS-48239](https://issues.jenkins-ci.org/browse/JENKINS-48239) -
-Getting issue details... STATUS
+The current code does not work with Pipeline projects (  
+[JENKINS-48239](https://issues.jenkins-ci.org/browse/JENKINS-48239)).
 
 # Version History
-Please refert to the [changelog](CHANGELOG.md).
+Please refer to the [changelog](CHANGELOG.md).
