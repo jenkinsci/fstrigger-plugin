@@ -190,7 +190,7 @@ FileNameTrigger
 
 ## Release 0.5
 
-* Polling is done on slaves if configured
+* Polling is done on agents if configured
 
 ## Release 0.4
 
