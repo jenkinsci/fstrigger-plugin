@@ -75,7 +75,7 @@ FSTrigger triggers builds on jenkins restart
 
 * Fix
 [JENKINS-12865](https://issues.jenkins-ci.org/browse/JENKINS-12865) -
-[ERROR](https://wiki.jenkins.io/display/JENKINS/FSTrigger+Plugin#) -
+[ERROR](https://plugins.jenkins.io/fstrigger/) -
 SEVERE - Polling error Current Project is null from FSTrigger
 
 ## Release 0.26
