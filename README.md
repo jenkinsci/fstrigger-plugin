@@ -16,7 +16,7 @@ files in a folder.
 Note: The plug-in uses only persistence in memory. There is no impact on
 the Jenkins infrastructure (no new files created).  
 This plugin provides a polling typology among the [XTrigger
-Plugin](https://wiki.jenkins.io/display/JENKINS/XTrigger+Plugin).
+Plugin](https://github.com/jenkinsci/xtrigger-plugin).
 
 ## 1) Polling a set of files in a folder
 
