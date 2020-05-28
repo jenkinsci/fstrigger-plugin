@@ -1,4 +1,4 @@
-# FSTrigger Plugin for Jenkins
+# Filesystem Trigger Plugin for Jenkins
 
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/fstrigger.svg)](https://plugins.jenkins.io/fstrigger)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/fstrigger.svg?color=blue)](https://plugins.jenkins.io/fstrigger)
