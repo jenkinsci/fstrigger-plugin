@@ -3,7 +3,7 @@
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/fstrigger.svg)](https://plugins.jenkins.io/fstrigger)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/fstrigger.svg?color=blue)](https://plugins.jenkins.io/fstrigger)
 
-FSTrigger provides polling mechanisms to monitor a file system and
+Filesystem Trigger Plugin (also known as FSTrigger) provides polling mechanisms to monitor a file system and
 trigger a build if a file or a set of files have changed.
 
 # Features
