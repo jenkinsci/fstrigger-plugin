@@ -9,6 +9,7 @@ import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
+import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +46,10 @@ public class FSTriggerComputeFileService implements Serializable {
                     }
                     return new FilePath(file);
                 }
+				public void checkRoles(RoleChecker checker) throws SecurityException {
+					// TODO Auto-generated method stub
+					
+				}
             });
 
         } catch (EnvInjectException e) {

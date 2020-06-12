@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
     The plug-in makes it possible to monitor changes of a file or a set of files in a folder.
 </div>

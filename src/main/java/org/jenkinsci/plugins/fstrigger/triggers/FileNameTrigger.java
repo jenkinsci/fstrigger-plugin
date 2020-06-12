@@ -11,6 +11,7 @@ import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
+import jenkins.model.Jenkins;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -26,6 +27,7 @@ import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,6 +124,11 @@ public class FileNameTrigger extends AbstractTrigger {
                                         }
                                         return type.getMemoryInfo();
                                     }
+									
+									public void checkRoles(RoleChecker checker) throws SecurityException {
+										// TODO Auto-generated method stub
+										
+									}
                                 });
                                 type.setMemoryInfo(memoryInfo);
                             } catch (IOException ioe) {
@@ -227,6 +234,11 @@ public class FileNameTrigger extends AbstractTrigger {
                         throw new RuntimeException(fse);
                     }
                 }
+				
+				public void checkRoles(RoleChecker checker) throws SecurityException {
+					// TODO Auto-generated method stub
+					
+				}
             });
 
             if (changedFileName) {
@@ -255,6 +267,10 @@ public class FileNameTrigger extends AbstractTrigger {
                             }
                             return isTriggered;
                         }
+						public void checkRoles(RoleChecker checker) throws SecurityException {
+							// TODO Auto-generated method stub
+							
+						}
                     });
                     if (isTriggered) {
                         return true;

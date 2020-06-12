@@ -8,6 +8,7 @@ import hudson.console.AnnotatedLargeText;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
+import jenkins.model.Jenkins;
 import org.apache.commons.jelly.XMLOutput;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
@@ -19,6 +20,7 @@ import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.*;
@@ -191,6 +193,10 @@ public class FolderContentTrigger extends AbstractTrigger {
                         throw new RuntimeException(fse);
                     }
                 }
+				public void checkRoles(RoleChecker checker) throws SecurityException {
+					// TODO Auto-generated method stub
+					
+				}
             });
         } catch (IOException e) {
             throw new XTriggerException(e);
@@ -311,6 +317,10 @@ public class FolderContentTrigger extends AbstractTrigger {
                 public Boolean invoke(File slavePath, VirtualChannel channel) throws IOException, InterruptedException {
                     return checkIfModifiedFile(log, originMd5Map, newMd5Map);
                 }
+				public void checkRoles(RoleChecker checker) throws SecurityException {
+					// TODO Auto-generated method stub
+					
+				}
             });
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
