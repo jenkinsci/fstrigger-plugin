@@ -38,7 +38,7 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <xtrigger.lib.version>0.29</xtrigger.lib.version>
-        <junit.version>4.8.2</junit.version>
+        <junit.version>4.13.1</junit.version>
         <mockito.version>1.8.5</mockito.version>
     </properties>
 
