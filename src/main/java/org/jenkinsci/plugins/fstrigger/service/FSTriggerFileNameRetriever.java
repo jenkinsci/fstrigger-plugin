@@ -109,11 +109,11 @@ public class FSTriggerFileNameRetriever implements Serializable {
         return null;
     }
 
-    class FileNameExtractInfo {
+    static class FileNameExtractInfo {
 
-        private String rootDir;
+        private final String rootDir;
 
-        private String fileNamePattern;
+        private final String fileNamePattern;
 
         FileNameExtractInfo(String rootDir, String fileNamePattern) {
             this.rootDir = rootDir;

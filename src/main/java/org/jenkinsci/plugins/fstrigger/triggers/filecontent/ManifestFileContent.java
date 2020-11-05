@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.util.Arrays;
@@ -18,7 +17,6 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
 
     protected transient Attributes attributes;
 
-    @DataBoundConstructor
     public ManifestFileContent(String keys2Inspect, boolean allKeys) {
         super(keys2Inspect, allKeys);
     }

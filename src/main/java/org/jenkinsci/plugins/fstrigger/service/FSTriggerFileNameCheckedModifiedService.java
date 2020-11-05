@@ -14,15 +14,15 @@ import java.util.Date;
  */
 public class FSTriggerFileNameCheckedModifiedService {
 
-    private XTriggerLog log;
+    private final XTriggerLog log;
 
-    private FileNameTriggerInfo fileInfo;
+    private final FileNameTriggerInfo fileInfo;
 
-    private File resolvedFile;
+    private final File resolvedFile;
 
-    private long lastModifiedDateTime;
+    private final long lastModifiedDateTime;
 
-    private File newResolvedFile;
+    private final File newResolvedFile;
 
     public FSTriggerFileNameCheckedModifiedService(XTriggerLog log, FileNameTriggerInfo fileInfo, String resolvedFilePath, Long resolvedFileLastModified, File newResolvedFile) {
 

@@ -38,13 +38,13 @@ public class ZIPFileContent extends FSTriggerContentFileType {
         if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
-        if (memoryInfo instanceof List) {
+        if (memoryInfo != null) {
             this.zipEntries = (List) memoryInfo;
         }
     }
 
     private List<ZipEntry> getListZipEntries(Enumeration<? extends ZipEntry> entriesEnumeration) {
-        List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
+        List<ZipEntry> zipEntries = new ArrayList<>();
         while (entriesEnumeration.hasMoreElements()) {
             zipEntries.add(entriesEnumeration.nextElement());
         }
@@ -107,7 +107,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
                     return true;
                 }
 
-                boolean bothIsDirectory = initZipEntry.isDirectory() ? newZipEntry.isDirectory() : false;
+                boolean bothIsDirectory = initZipEntry.isDirectory() && newZipEntry.isDirectory();
                 if (bothIsDirectory) {
                     log.info(String.format("The type (file or directory) of the '%s' entry has changed.", initZipEntry.getName()));
                     log.info(displayZipEntries(zipFile.entries()));

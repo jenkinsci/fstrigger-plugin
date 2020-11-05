@@ -10,7 +10,7 @@ import java.io.Serializable;
  */
 public class XMLFileContentEntry implements Serializable {
 
-    private String expression;
+    private final String expression;
 
     @DataBoundConstructor
     public XMLFileContentEntry(String expression) {

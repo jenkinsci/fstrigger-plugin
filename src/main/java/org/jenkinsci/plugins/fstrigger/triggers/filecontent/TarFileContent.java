@@ -24,7 +24,7 @@ import java.util.List;
 public class TarFileContent extends FSTriggerContentFileType {
 
 
-    protected transient List<TarEntry> tarEntries = new ArrayList<TarEntry>();
+    protected transient List<TarEntry> tarEntries = new ArrayList<>();
 
     private transient StringBuilder tarContent;
 

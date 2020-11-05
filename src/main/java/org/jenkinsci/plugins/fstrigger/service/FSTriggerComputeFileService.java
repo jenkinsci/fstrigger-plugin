@@ -3,7 +3,8 @@ package org.jenkinsci.plugins.fstrigger.service;
 import hudson.FilePath;
 import hudson.model.AbstractProject;
 import hudson.model.Node;
-import hudson.remoting.Callable;
+import hudson.remoting.VirtualChannel;
+import jenkins.MasterToSlaveFileCallable;
 import org.jenkinsci.lib.envinject.EnvInjectException;
 import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
@@ -37,24 +38,23 @@ public class FSTriggerComputeFileService implements Serializable {
         EnvVarsResolver varsRetriever = new EnvVarsResolver();
         try {
             final Map<String, String> envVars = varsRetriever.getPollingEnvVars(project, node);
-            return node.getRootPath().act(new Callable<FilePath, XTriggerException>() {
-                public FilePath call() throws XTriggerException {
-                    File file = new FSTriggerFileNameRetriever(fileInfo, log, envVars).getFile();
-                    if (file == null) {
+            return node.getRootPath().act(new MasterToSlaveFileCallable<FilePath>() {
+                @Override
+                public FilePath invoke(File file, VirtualChannel virtualChannel) throws IOException {
+                    File f;
+                    try {
+                        f = new FSTriggerFileNameRetriever(fileInfo, log, envVars).getFile();
+                    } catch (XTriggerException e) {
+                        throw new IOException(e);
+                    }
+                    if (f == null) {
                         return null;
                     }
-                    return new FilePath(file);
+                    return new FilePath(f);
                 }
             });
-
-        } catch (EnvInjectException e) {
-            throw new XTriggerException(e);
-
-        } catch (IOException e) {
-            throw new XTriggerException(e);
-        } catch (InterruptedException e) {
+        } catch (EnvInjectException | InterruptedException | IOException e) {
             throw new XTriggerException(e);
         }
     }
-
 }

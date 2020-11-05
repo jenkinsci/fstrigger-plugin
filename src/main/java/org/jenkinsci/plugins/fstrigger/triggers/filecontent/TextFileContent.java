@@ -21,10 +21,10 @@ import java.util.regex.Pattern;
  */
 public class TextFileContent extends FSTriggerContentFileType {
 
-    private List<TextFileContentEntry> regexElements = new ArrayList<TextFileContentEntry>();
+    private List<TextFileContentEntry> regexElements;
 
     @DataBoundConstructor
-    public TextFileContent(List<TextFileContentEntry> element) throws Descriptor.FormException {
+    public TextFileContent(List<TextFileContentEntry> element) {
         this.regexElements = element;
     }
 

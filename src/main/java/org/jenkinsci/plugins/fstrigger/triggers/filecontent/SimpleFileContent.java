@@ -11,7 +11,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -48,10 +47,8 @@ public class SimpleFileContent extends FSTriggerContentFileType {
             FileInputStream fis = new FileInputStream(file);
             md5 = Util.getDigestOf(fis);
             fis.close();
-        } catch (FileNotFoundException fne) {
+        } catch (IOException fne) {
             throw new XTriggerException(fne);
-        } catch (IOException ioe) {
-            throw new XTriggerException(ioe);
         }
     }
 
@@ -62,10 +59,8 @@ public class SimpleFileContent extends FSTriggerContentFileType {
             FileInputStream fis = new FileInputStream(file);
             newComputedMd5 = Util.getDigestOf(fis);
             fis.close();
-        } catch (FileNotFoundException fne) {
+        } catch (IOException fne) {
             throw new XTriggerException(fne);
-        } catch (IOException ioe) {
-            throw new XTriggerException(ioe);
         }
 
         assert md5 != null;

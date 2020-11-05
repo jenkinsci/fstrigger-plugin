@@ -8,6 +8,8 @@ import hudson.console.AnnotatedLargeText;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.SequentialExecutionQueue;
+import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import org.apache.commons.jelly.XMLOutput;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
@@ -111,7 +113,7 @@ public class FolderContentTrigger extends AbstractTrigger {
         return false;
     }
 
-    class FileInfo implements Serializable {
+    static class FileInfo implements Serializable {
 
         private final String md5;
 
@@ -183,8 +185,9 @@ public class FolderContentTrigger extends AbstractTrigger {
 
         Map<String, FileInfo> result;
         try {
-            result = launcherNode.getRootPath().act(new FilePath.FileCallable<Map<String, FileInfo>>() {
-                public Map<String, FileInfo> invoke(File node, VirtualChannel channel) throws IOException, InterruptedException {
+            result = launcherNode.getRootPath().act(new MasterToSlaveFileCallable<Map<String, FileInfo>>() {
+                @Override
+                public Map<String, FileInfo> invoke(File file, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
                         return getFileInfo(path, includes, excludes, log);
                     } catch (XTriggerException fse) {
@@ -192,9 +195,7 @@ public class FolderContentTrigger extends AbstractTrigger {
                     }
                 }
             });
-        } catch (IOException e) {
-            throw new XTriggerException(e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             throw new XTriggerException(e);
         }
 
@@ -214,7 +215,7 @@ public class FolderContentTrigger extends AbstractTrigger {
             return null;
         }
 
-        Map<String, FileInfo> result = new HashMap<String, FileInfo>();
+        Map<String, FileInfo> result = new HashMap<>();
         if (includes == null) {
             includes = "**/*.*, **/*";
         }
@@ -259,8 +260,6 @@ public class FolderContentTrigger extends AbstractTrigger {
                 FileInputStream fis = new FileInputStream(fileResource.getFile());
                 currentMd5 = Util.getDigestOf(fis);
                 fis.close();
-            } catch (FileNotFoundException e) {
-                throw new XTriggerException(e);
             } catch (IOException e) {
                 throw new XTriggerException(e);
             }
@@ -307,15 +306,14 @@ public class FolderContentTrigger extends AbstractTrigger {
         boolean isTriggering;
         try {
             final Map<String, FileInfo> originMd5Map = md5Map;
-            isTriggering = launcherNode.getRootPath().act(new FilePath.FileCallable<Boolean>() {
-                public Boolean invoke(File slavePath, VirtualChannel channel) throws IOException, InterruptedException {
+            isTriggering = launcherNode.getRootPath().act(new MasterToSlaveFileCallable<Boolean>() {
+                @Override
+                public Boolean invoke(File nodePath, VirtualChannel channel) throws IOException, InterruptedException {
                     return checkIfModifiedFile(log, originMd5Map, newMd5Map);
                 }
             });
-        } catch (IOException ioe) {
+        } catch (IOException | InterruptedException ioe) {
             throw new XTriggerException(ioe);
-        } catch (InterruptedException ie) {
-            throw new XTriggerException(ie);
         }
 
         return isTriggering;
@@ -398,12 +396,12 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     @Override
     public FolderContentTriggerDescriptor getDescriptor() {
-        return (FolderContentTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (FolderContentTriggerDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     public final class FSTriggerFolderAction extends FSTriggerAction {
 
-        private transient String actionTitle;
+        private final transient String actionTitle;
 
         public FSTriggerFolderAction(String actionTitle) {
             this.actionTitle = actionTitle;
