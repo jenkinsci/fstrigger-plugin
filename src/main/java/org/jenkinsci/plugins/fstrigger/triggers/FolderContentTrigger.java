@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  */
 public class FolderContentTrigger extends AbstractTrigger {
 
-    private static Logger LOGGER = Logger.getLogger(FolderContentTrigger.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FolderContentTrigger.class.getName());
 
     private static final String CAUSE = "Triggered by a change to a folder";
 
@@ -47,14 +47,14 @@ public class FolderContentTrigger extends AbstractTrigger {
     private final String path;
     private final String includes;
     private final String excludes;
-    private boolean excludeCheckLastModificationDate;
-    private boolean excludeCheckContent;
-    private boolean excludeCheckFewerOrMoreFiles;
+    private final boolean excludeCheckLastModificationDate;
+    private final boolean excludeCheckContent;
+    private final boolean excludeCheckFewerOrMoreFiles;
 
     /**
      * Memory fields
      */
-    private transient Map<String, FileInfo> md5Map = new HashMap<String, FileInfo>();
+    private transient Map<String, FileInfo> md5Map = new HashMap<>();
 
 
     @DataBoundConstructor
@@ -100,6 +100,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     @Override
     protected File getLogFile() {
+        if (job == null) return null;
         return new File(job.getRootDir(), "trigger-polling-folder.log");
     }
 
@@ -178,14 +179,15 @@ public class FolderContentTrigger extends AbstractTrigger {
             throw new XTriggerException("A node must be set.");
         }
 
-        if (launcherNode.getRootPath() == null) {
-            log.info("The slave is now offline. Waiting next schedule");
+        FilePath rootPath = launcherNode.getRootPath();
+        if (rootPath == null) {
+            log.info("The node is now offline. Waiting next schedule");
             return null;
         }
 
         Map<String, FileInfo> result;
         try {
-            result = launcherNode.getRootPath().act(new MasterToSlaveFileCallable<Map<String, FileInfo>>() {
+            result = rootPath.act(new MasterToSlaveFileCallable<Map<String, FileInfo>>() {
                 @Override
                 public Map<String, FileInfo> invoke(File file, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
@@ -204,7 +206,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private Map<String, FileInfo> getFileInfo(String path, String includes, String excludes, XTriggerLog log) throws XTriggerException {
 
-        log.info(String.format("\nTrying to monitor the folder '%s'", path));
+        log.info(String.format("%nTrying to monitor the folder '%s'", path));
 
         File folder = new File(path);
         if (!folder.exists()) {
@@ -244,7 +246,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private void processDirectoryResource(XTriggerLog log, Map<String, FileInfo> result, FileResource folderResource) throws XTriggerException {
         if (!folderResource.isExists()) {
-            log.info(String.format("\nThe folder '%s' doesn't exist anymore ", folderResource.getFile().getPath()));
+            log.info(String.format("%nThe folder '%s' doesn't exist anymore ", folderResource.getFile().getPath()));
         } else {
             FileInfo fileInfo = new FileInfo(null, folderResource.getLastModified());
             result.put(folderResource.getFile().getAbsolutePath(), fileInfo);
@@ -253,7 +255,7 @@ public class FolderContentTrigger extends AbstractTrigger {
 
     private void processFileResource(XTriggerLog log, Map<String, FileInfo> result, FileResource fileResource) throws XTriggerException {
         if (!fileResource.isExists()) {
-            log.info(String.format("\nThe file '%s' doesn't exist anymore ", fileResource.getFile().getPath()));
+            log.info(String.format("%nThe file '%s' doesn't exist anymore ", fileResource.getFile().getPath()));
         } else {
             String currentMd5;
             try {
@@ -302,11 +304,17 @@ public class FolderContentTrigger extends AbstractTrigger {
             return true;
         }
 
+        FilePath rootPath = launcherNode.getRootPath();
+        if (rootPath == null) {
+            log.info("The node is now offline. Skipping");
+            return false;
+        }
+
         //Check each file
         boolean isTriggering;
         try {
             final Map<String, FileInfo> originMd5Map = md5Map;
-            isTriggering = launcherNode.getRootPath().act(new MasterToSlaveFileCallable<Boolean>() {
+            isTriggering = rootPath.act(new MasterToSlaveFileCallable<Boolean>() {
                 @Override
                 public Boolean invoke(File nodePath, VirtualChannel channel) throws IOException, InterruptedException {
                     return checkIfModifiedFile(log, originMd5Map, newMd5Map);
@@ -434,7 +442,10 @@ public class FolderContentTrigger extends AbstractTrigger {
 
         @SuppressWarnings("unused")
         public void writeLogTo(XMLOutput out) throws IOException {
-            new AnnotatedLargeText<FSTriggerFolderAction>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+            long pos = new AnnotatedLargeText<>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+            if (pos == 0) {
+                LOGGER.warning("Failed to write log for FolderContentTrigger");
+            }
         }
     }
 
@@ -464,4 +475,10 @@ public class FolderContentTrigger extends AbstractTrigger {
         }
 
     }
+    protected Object readResolve() throws ObjectStreamException {
+        super.readResolve();
+        this.md5Map = new HashMap<>();
+        return this;
+    }
+    private static final long serialVersionUID = 1L;
 }

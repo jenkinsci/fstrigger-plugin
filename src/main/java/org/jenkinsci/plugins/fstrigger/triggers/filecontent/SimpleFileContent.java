@@ -93,5 +93,5 @@ public class SimpleFileContent extends FSTriggerContentFileType {
             return getDisplayName();
         }
     }
-
+    private static final long serialVersionUID = 1L;
 }

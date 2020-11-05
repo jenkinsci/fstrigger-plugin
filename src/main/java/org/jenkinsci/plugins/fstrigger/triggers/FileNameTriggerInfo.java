@@ -4,6 +4,7 @@ import hudson.FilePath;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * @author Gregory Boissinot
@@ -43,7 +44,7 @@ public class FileNameTriggerInfo implements Serializable {
 
     @SuppressWarnings("unused")
     public FSTriggerContentFileType[] getContentFileTypes() {
-        return contentFileTypes;
+        return Arrays.copyOf(contentFileTypes, contentFileTypes.length);
     }
 
     @SuppressWarnings("unused")
@@ -64,7 +65,7 @@ public class FileNameTriggerInfo implements Serializable {
     }
 
     public void setContentFileTypes(FSTriggerContentFileType[] contentFileTypes) {
-        this.contentFileTypes = contentFileTypes;
+        this.contentFileTypes = Arrays.copyOf(contentFileTypes, contentFileTypes.length);
     }
 
     public void setDoNotCheckLastModificationDate(boolean doNotCheckLastModificationDate) {
@@ -86,4 +87,6 @@ public class FileNameTriggerInfo implements Serializable {
     public void setLastModifications(long lastModifications) {
         this.lastModifications = lastModifications;
     }
+
+    private static final long serialVersionUID = 1L;
 }

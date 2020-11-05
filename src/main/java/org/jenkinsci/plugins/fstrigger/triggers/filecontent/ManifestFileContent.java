@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
 
@@ -41,7 +42,6 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
      * @return the java.util.jar.Manifest object if exists, otherwise null
      */
     protected abstract Manifest getManifest(File file);
-
 
     private Attributes computeAttributesObject(File file) throws XTriggerException {
         Manifest manifest = getManifest(file);
@@ -103,9 +103,6 @@ public abstract class ManifestFileContent extends PropertiesFileContent {
         }
 
         Attributes newAttributes = computeAttributesObject(file);
-        if (newAttributes == null) {
-            return false;
-        }
 
         if (attributes.size() != newAttributes.size()) {
             String msg = String.format("The new content file contains %d attribute(s) whereas the previous content contains %d attribute(s)", newAttributes.size(), attributes.size());

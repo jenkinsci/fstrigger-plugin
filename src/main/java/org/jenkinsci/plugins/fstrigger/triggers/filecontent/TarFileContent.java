@@ -63,16 +63,14 @@ public class TarFileContent extends FSTriggerContentFileType {
 
 
     private List<TarEntry> getTarEntries(File file) throws IOException {
-
-        List<TarEntry> result = new ArrayList<TarEntry>();
-        FileInputStream fis = new FileInputStream(file);
-        TarInputStream tarInputStream = new TarInputStream(fis);
+        List<TarEntry> result = new ArrayList<>();
         TarEntry tarEntry;
-        while ((tarEntry = tarInputStream.getNextEntry()) != null) {
-            result.add(tarEntry);
+        try (FileInputStream fis = new FileInputStream(file);
+             TarInputStream tarInputStream = new TarInputStream(fis)) {
+            while ((tarEntry = tarInputStream.getNextEntry()) != null) {
+                result.add(tarEntry);
+            }
         }
-        fis.close();
-
         return result;
     }
 
@@ -229,5 +227,9 @@ public class TarFileContent extends FSTriggerContentFileType {
         }
 
     }
-
+    private Object readResolve() {
+        this.tarEntries = new ArrayList<>();
+        return this;
+    }
+    private static final long serialVersionUID = 1L;
 }

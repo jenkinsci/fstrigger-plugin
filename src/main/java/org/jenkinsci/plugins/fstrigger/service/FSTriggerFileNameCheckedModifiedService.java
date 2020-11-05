@@ -52,12 +52,10 @@ public class FSTriggerFileNameCheckedModifiedService {
             return false;
         }
 
-        if (resolvedFile == null && newResolvedFile != null) {
+        if (resolvedFile == null) {
             log.info("The file didn't exist for the previous polling and now it exists.");
             return true;
         }
-
-        assert (resolvedFile != null);
 
         if (!resolvedFile.equals(newResolvedFile)) {
             log.info("The current polling file has changed.");

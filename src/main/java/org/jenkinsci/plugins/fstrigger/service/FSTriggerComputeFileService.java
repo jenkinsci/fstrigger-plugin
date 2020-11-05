@@ -35,10 +35,15 @@ public class FSTriggerComputeFileService implements Serializable {
             throw new XTriggerException("A valid node must be set.");
         }
 
+        FilePath rootPath = node.getRootPath();
+        if (rootPath == null) {
+            throw new XTriggerException("An online node must be set.");
+        }
+
         EnvVarsResolver varsRetriever = new EnvVarsResolver();
         try {
             final Map<String, String> envVars = varsRetriever.getPollingEnvVars(project, node);
-            return node.getRootPath().act(new MasterToSlaveFileCallable<FilePath>() {
+            return rootPath.act(new MasterToSlaveFileCallable<FilePath>() {
                 @Override
                 public FilePath invoke(File file, VirtualChannel virtualChannel) throws IOException {
                     File f;

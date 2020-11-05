@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -50,23 +51,24 @@ public class FileNameTrigger extends AbstractTrigger {
     public static final String STRATEGY_IGNORE = "IGNORE";
     public static final String STRATEGY_LATEST = "LATEST";
 
-    private static Logger LOGGER = Logger.getLogger(FileNameTrigger.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FileNameTrigger.class.getName());
     private static final String CAUSE = "Triggered by a change to a file";
 
-    private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
+    private FileNameTriggerInfo[] fileInfo;
 
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
-        this.fileInfo = fileInfo;
+        this.fileInfo = Arrays.copyOf(fileInfo, fileInfo.length);
     }
 
     @SuppressWarnings("unused")
     public FileNameTriggerInfo[] getFileInfo() {
-        return fileInfo;
+        return Arrays.copyOf(fileInfo, fileInfo.length);
     }
 
     @Override
     protected File getLogFile() {
+        if (job == null) return null;
         return new File(job.getRootDir(), "trigger-polling-files.log");
     }
 
@@ -104,7 +106,7 @@ public class FileNameTrigger extends AbstractTrigger {
     }
 
     private void initContentElementsIfNeed(FileNameTriggerInfo info) throws XTriggerException {
-
+        if (job == null) return;
         FilePath resolvedFile = info.getResolvedFile();
         if (resolvedFile != null) {
             boolean inspectingContentFile = info.isInspectingContentFile();
@@ -112,8 +114,8 @@ public class FileNameTrigger extends AbstractTrigger {
                 FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
                 if (contentFileTypes != null) {
                     for (final FSTriggerContentFileType type : contentFileTypes) {
-                        final String jobName = job.getName();
                         if (type != null) {
+                            final String jobName = job.getName();
                             try {
                                 Object memoryInfo = resolvedFile.act(new MemoryInfo(jobName, type));
                                 type.setMemoryInfo(memoryInfo);
@@ -332,7 +334,10 @@ public class FileNameTrigger extends AbstractTrigger {
 
         @SuppressWarnings("unused")
         public void writeLogTo(XMLOutput out) throws IOException {
-            new AnnotatedLargeText<>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+            long pos = new AnnotatedLargeText<>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+            if (pos == 0) {
+                LOGGER.warning("Failed to write log for FileNameTrigger");
+            }
         }
     }
 
@@ -524,7 +529,7 @@ public class FileNameTrigger extends AbstractTrigger {
     @SuppressWarnings({"unused", "deprecation"})
     @Deprecated
     public FSTriggerContentFileType[] getContentFileTypes() {
-        return contentFileTypes;
+        return Arrays.copyOf(contentFileTypes, contentFileTypes.length);
     }
 
     @SuppressWarnings({"unused", "deprecation"})
@@ -546,5 +551,5 @@ public class FileNameTrigger extends AbstractTrigger {
 
         return this;
     }
-
+    private static final long serialVersionUID = 1L;
 }

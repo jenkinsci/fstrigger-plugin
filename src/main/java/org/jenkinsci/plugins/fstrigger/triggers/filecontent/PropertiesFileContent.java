@@ -11,9 +11,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 
@@ -100,10 +103,8 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
     private Properties computePropertiesObject(File file) throws XTriggerException {
 
         Properties propsReader = new Properties();
-        try {
-            Reader reader = new FileReader(file);
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             propsReader.load(reader);
-            reader.close();
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
         }
@@ -206,5 +207,9 @@ public class PropertiesFileContent extends FSTriggerContentFileType {
         }
 
     }
-
+    protected Object readResolve() {
+        this.properties = new Properties();
+        return this;
+    }
+    private static final long serialVersionUID = 1L;
 }
