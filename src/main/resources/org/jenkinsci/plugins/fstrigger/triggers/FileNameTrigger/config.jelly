@@ -1,10 +1,10 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:fstrigger="/lib/fstrigger">
 
     <f:entry>
         <f:repeatable var="fileElement" items="${instance.fileInfo}" add="${%Add file to monitor}">
-            <table width="100%">
+            <fstrigger:blockWrapper>
 
                 <f:entry field="filePathPattern"
                          title="${%File Path}"
@@ -25,7 +25,7 @@
                 </f:advanced>
 
                 <f:entry>
-                    <table style="width:100%">
+                    <fstrigger:blockWrapper>
                         <f:optionalBlock
                                 field="inspectingContentFile"
                                 name="inspectingContentFile"
@@ -48,7 +48,7 @@
                             </f:entry>
 
                         </f:optionalBlock>
-                    </table>
+                    </fstrigger:blockWrapper>
                 </f:entry>
 
                 <f:entry title="">
@@ -57,7 +57,7 @@
                     </div>
                 </f:entry>
 
-            </table>
+            </fstrigger:blockWrapper>
         </f:repeatable>
     </f:entry>
 
