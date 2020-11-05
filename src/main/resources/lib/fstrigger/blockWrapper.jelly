@@ -1,17 +1,14 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:d="jelly:define" xmlns:st="jelly:stapler">
-  <st:documentation>
-    Support both table and div layout, remove when baseline is 2.264 or newer
-    <st:attribute name="name" />
-  </st:documentation>
+<j:jelly xmlns:j="jelly:core" xmlns:d="jelly:define">
+  <!-- TODO remove and switch to div after baseline is 2.264 or newer -->
   <j:choose>
     <j:when test="${divBasedFormLayout}">
-      <div name="${attrs.name}">
+      <div>
         <d:invokeBody/>
       </div>
     </j:when>
     <j:otherwise>
-      <table name="${attrs.name}">
+      <table style="width:100%">
         <d:invokeBody/>
       </table>
     </j:otherwise>
