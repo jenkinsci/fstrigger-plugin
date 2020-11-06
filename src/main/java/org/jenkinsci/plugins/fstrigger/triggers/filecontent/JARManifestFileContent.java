@@ -23,8 +23,7 @@ public class JARManifestFileContent extends ManifestFileContent {
 
     @Override
     protected Manifest getManifest(File file) {
-        try {
-            JarFile jarFile = new JarFile(file);
+        try (JarFile jarFile = new JarFile(file)) {
             return jarFile.getManifest();
         } catch (IOException ioe) {
             return null;

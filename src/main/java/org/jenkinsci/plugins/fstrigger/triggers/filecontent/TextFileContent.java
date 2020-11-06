@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import org.jenkinsci.lib.xtrigger.XTriggerException;
 import org.jenkinsci.lib.xtrigger.XTriggerLog;
@@ -11,7 +10,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,10 +20,10 @@ import java.util.regex.Pattern;
  */
 public class TextFileContent extends FSTriggerContentFileType {
 
-    private List<TextFileContentEntry> regexElements = new ArrayList<TextFileContentEntry>();
+    private List<TextFileContentEntry> regexElements;
 
     @DataBoundConstructor
-    public TextFileContent(List<TextFileContentEntry> element) throws Descriptor.FormException {
+    public TextFileContent(List<TextFileContentEntry> element) {
         this.regexElements = element;
     }
 
@@ -54,11 +53,8 @@ public class TextFileContent extends FSTriggerContentFileType {
     @Override
     protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
-        FileReader fileReader = null;
-        BufferedReader bufferedReader = null;
-        try {
-            fileReader = new FileReader(file);
-            bufferedReader = new BufferedReader(fileReader);
+        try (Reader fileReader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+             BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             String line;
             //Check line by line if a pattern matches
             while ((line = bufferedReader.readLine()) != null) {
@@ -76,27 +72,9 @@ public class TextFileContent extends FSTriggerContentFileType {
                     }
                 }
             }
-        } catch (FileNotFoundException fne) {
+        } catch (IOException fne) {
             throw new XTriggerException(fne);
-        } catch (IOException ioe) {
-            throw new XTriggerException(ioe);
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException ioe) {
-                    throw new XTriggerException(ioe);
-                }
-            }
-            if (fileReader != null) {
-                try {
-                    fileReader.close();
-                } catch (IOException ioe) {
-                    throw new XTriggerException(ioe);
-                }
-            }
         }
-
 
         return false;
     }

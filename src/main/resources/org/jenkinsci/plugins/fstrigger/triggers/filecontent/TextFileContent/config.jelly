@@ -1,10 +1,12 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form">
+         xmlns:f="/lib/form"
+         xmlns:fstrigger="/lib/fstrigger">
 
     <f:entry title="${descriptor.label}"
              help="/descriptor/org.jenkinsci.plugins.fstrigger.triggers.filecontent.TextFileContent/help/type">
         <f:repeatable var="element" items="${instance.regexElements}" add="${%Add a Regular expression}">
-            <table width="100%">
+            <fstrigger:blockWrapper>
 
                 <f:entry field="regex" title="${%Regular Expression}">
                     <f:textbox name="log.regex"
@@ -17,7 +19,7 @@
                     </div>
                 </f:entry>
 
-            </table>
+            </fstrigger:blockWrapper>
         </f:repeatable>
     </f:entry>
 

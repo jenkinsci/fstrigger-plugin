@@ -14,15 +14,15 @@ import java.util.Date;
  */
 public class FSTriggerFileNameCheckedModifiedService {
 
-    private XTriggerLog log;
+    private final XTriggerLog log;
 
-    private FileNameTriggerInfo fileInfo;
+    private final FileNameTriggerInfo fileInfo;
 
-    private File resolvedFile;
+    private final File resolvedFile;
 
-    private long lastModifiedDateTime;
+    private final long lastModifiedDateTime;
 
-    private File newResolvedFile;
+    private final File newResolvedFile;
 
     public FSTriggerFileNameCheckedModifiedService(XTriggerLog log, FileNameTriggerInfo fileInfo, String resolvedFilePath, Long resolvedFileLastModified, File newResolvedFile) {
 
@@ -52,12 +52,10 @@ public class FSTriggerFileNameCheckedModifiedService {
             return false;
         }
 
-        if (resolvedFile == null && newResolvedFile != null) {
+        if (resolvedFile == null) {
             log.info("The file didn't exist for the previous polling and now it exists.");
             return true;
         }
-
-        assert (resolvedFile != null);
 
         if (!resolvedFile.equals(newResolvedFile)) {
             log.info("The current polling file has changed.");

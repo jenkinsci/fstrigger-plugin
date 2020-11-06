@@ -10,6 +10,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -19,7 +20,7 @@ import java.util.zip.ZipFile;
  */
 public class ZIPFileContent extends FSTriggerContentFileType {
 
-    protected transient List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
+    protected transient List<ZipEntry> zipEntries = new ArrayList<>();
 
     private transient StringBuilder zipContent;
 
@@ -38,13 +39,13 @@ public class ZIPFileContent extends FSTriggerContentFileType {
         if ((memoryInfo != null) && !(memoryInfo instanceof List)) {
             throw new IllegalArgumentException(String.format("The memory info %s object is not a List object.", memoryInfo));
         }
-        if (memoryInfo instanceof List) {
+        if (memoryInfo != null) {
             this.zipEntries = (List) memoryInfo;
         }
     }
 
     private List<ZipEntry> getListZipEntries(Enumeration<? extends ZipEntry> entriesEnumeration) {
-        List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
+        List<ZipEntry> zipEntries = new ArrayList<>();
         while (entriesEnumeration.hasMoreElements()) {
             zipEntries.add(entriesEnumeration.nextElement());
         }
@@ -53,12 +54,10 @@ public class ZIPFileContent extends FSTriggerContentFileType {
 
     @Override
     protected void initForContent(File file) throws XTriggerException {
-        try {
-            ZipFile zipFile = new ZipFile(file);
+        try (ZipFile zipFile = new ZipFile(file)) {
             zipContent = new StringBuilder();
             fillZipContent(zipFile.entries(), zipContent);
             zipEntries = getListZipEntries(zipFile.entries());
-
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
         }
@@ -68,8 +67,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
     protected boolean isTriggeringBuildForContent(File file, XTriggerLog log) throws XTriggerException {
 
         List<ZipEntry> newZipEntries;
-        try {
-            ZipFile zipFile = new ZipFile(file);
+        try (ZipFile zipFile = new ZipFile(file)) {
             newZipEntries = getListZipEntries(zipFile.entries());
 
             //Initiated to true for detecting when the two zip files has not the same number of elements
@@ -107,7 +105,7 @@ public class ZIPFileContent extends FSTriggerContentFileType {
                     return true;
                 }
 
-                boolean bothIsDirectory = initZipEntry.isDirectory() ? newZipEntry.isDirectory() : false;
+                boolean bothIsDirectory = initZipEntry.isDirectory() && newZipEntry.isDirectory();
                 if (bothIsDirectory) {
                     log.info(String.format("The type (file or directory) of the '%s' entry has changed.", initZipEntry.getName()));
                     log.info(displayZipEntries(zipFile.entries()));
@@ -128,8 +126,8 @@ public class ZIPFileContent extends FSTriggerContentFileType {
                 } else if (initBytes == null || newBytes == null) {
                     changedMd5 = true;
                 } else {
-                    String initMd5 = Util.getDigestOf(new String(initZipEntry.getExtra()));
-                    String newMd5 = Util.getDigestOf(new String(newZipEntry.getExtra()));
+                    String initMd5 = Util.getDigestOf(new String(initZipEntry.getExtra(), StandardCharsets.UTF_8));
+                    String newMd5 = Util.getDigestOf(new String(newZipEntry.getExtra(), StandardCharsets.UTF_8));
                     changedMd5 = !initMd5.equals(newMd5);
                 }
                 if (changedMd5) {
@@ -195,5 +193,9 @@ public class ZIPFileContent extends FSTriggerContentFileType {
             return "ZIP File";
         }
     }
-
+    protected Object readResolve() {
+        this.zipEntries = new ArrayList<>();
+        return this;
+    }
+    private static final long serialVersionUID = 1L;
 }

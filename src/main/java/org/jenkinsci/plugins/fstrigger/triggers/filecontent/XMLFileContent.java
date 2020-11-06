@@ -132,12 +132,12 @@ public class XMLFileContent extends FSTriggerContentFileType {
                 continue;
             }
 
-            if (initValue == null && newValue != null) {
+            if (initValue == null) {
                 log.info(String.format("There was no value and there is a new value for the expression '%s'.", expression));
                 return true;
             }
 
-            if (initValue != null && newValue == null) {
+            if (newValue == null) {
                 log.info(String.format("There was a value and now the there is no value for the expression '%s'.", expression));
                 return true;
             }
@@ -187,4 +187,5 @@ public class XMLFileContent extends FSTriggerContentFileType {
         }
 
     }
+    private static final long serialVersionUID = 1L;
 }

@@ -4,13 +4,13 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.554.1</version>
+        <version>4.12</version>
     </parent>
 
     <artifactId>fstrigger</artifactId>
     <packaging>hpi</packaging>
     <name>Jenkins Filesystem Trigger Plug-in</name>
-    <version>0.40-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
     <url>https://github.com/jenkinsci/fstrigger-plugin</url>
 
     <licenses>
@@ -34,12 +34,13 @@
     </developers>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-        <xtrigger.lib.version>0.29</xtrigger.lib.version>
-        <junit.version>4.8.2</junit.version>
-        <mockito.version>1.8.5</mockito.version>
+        <revision>0.40</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
+        <xtrigger.lib.version>0.34</xtrigger.lib.version>
+        <jenkins.version>2.204.6</jenkins.version>
+        <java.level>8</java.level>
+        <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
     </properties>
 
     <dependencies>
@@ -53,24 +54,23 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>${mockito.version}</version>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
 
     </dependencies>
 
     <scm>
-        <connection>scm:git:git://github.com/jenkinsci/fstrigger-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/fstrigger-plugin.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+        <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+        <url>https://github.com/${gitHubRepo}</url>
+        <tag>${scmTag}</tag>
+    </scm>
 
     <repositories>
         <repository>

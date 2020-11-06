@@ -11,6 +11,8 @@ import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
 import hudson.util.StreamTaskListener;
+import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -48,23 +51,24 @@ public class FileNameTrigger extends AbstractTrigger {
     public static final String STRATEGY_IGNORE = "IGNORE";
     public static final String STRATEGY_LATEST = "LATEST";
 
-    private static Logger LOGGER = Logger.getLogger(FileNameTrigger.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FileNameTrigger.class.getName());
     private static final String CAUSE = "Triggered by a change to a file";
 
-    private FileNameTriggerInfo[] fileInfo = new FileNameTriggerInfo[0];
+    private FileNameTriggerInfo[] fileInfo;
 
     public FileNameTrigger(String cronTabSpec, FileNameTriggerInfo[] fileInfo) throws ANTLRException {
         super(cronTabSpec);
-        this.fileInfo = fileInfo;
+        this.fileInfo = Arrays.copyOf(fileInfo, fileInfo.length);
     }
 
     @SuppressWarnings("unused")
     public FileNameTriggerInfo[] getFileInfo() {
-        return fileInfo;
+        return Arrays.copyOf(fileInfo, fileInfo.length);
     }
 
     @Override
     protected File getLogFile() {
+        if (job == null) return null;
         return new File(job.getRootDir(), "trigger-polling-files.log");
     }
 
@@ -102,7 +106,7 @@ public class FileNameTrigger extends AbstractTrigger {
     }
 
     private void initContentElementsIfNeed(FileNameTriggerInfo info) throws XTriggerException {
-
+        if (job == null) return;
         FilePath resolvedFile = info.getResolvedFile();
         if (resolvedFile != null) {
             boolean inspectingContentFile = info.isInspectingContentFile();
@@ -110,31 +114,37 @@ public class FileNameTrigger extends AbstractTrigger {
                 FSTriggerContentFileType[] contentFileTypes = info.getContentFileTypes();
                 if (contentFileTypes != null) {
                     for (final FSTriggerContentFileType type : contentFileTypes) {
-                        final String jobName = job.getName();
                         if (type != null) {
+                            final String jobName = job.getName();
                             try {
-                                Object memoryInfo = resolvedFile.act(new FilePath.FileCallable<Object>() {
-                                    public Object invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-                                        try {
-                                            type.initMemoryFields(jobName, f);
-                                        } catch (XTriggerException fse) {
-                                            throw new RuntimeException(fse);
-                                        }
-                                        return type.getMemoryInfo();
-                                    }
-                                });
+                                Object memoryInfo = resolvedFile.act(new MemoryInfo(jobName, type));
                                 type.setMemoryInfo(memoryInfo);
-                            } catch (IOException ioe) {
-                                throw new XTriggerException(ioe);
-                            } catch (InterruptedException ie) {
+                            } catch (Throwable ie) {
                                 throw new XTriggerException(ie);
-                            } catch (Throwable t) {
-                                throw new XTriggerException(t);
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private static class MemoryInfo extends MasterToSlaveFileCallable<Object> {
+        private final String jobName;
+        private final FSTriggerContentFileType type;
+
+        public MemoryInfo(String jobName, FSTriggerContentFileType type) {
+            this.jobName = jobName;
+            this.type = type;
+        }
+        @Override
+        public Object invoke(File file, VirtualChannel virtualChannel) {
+            try {
+                type.initMemoryFields(jobName, file);
+            } catch (XTriggerException fse) {
+                throw new RuntimeException(fse);
+            }
+            return type.getMemoryInfo();
         }
     }
 
@@ -146,12 +156,10 @@ public class FileNameTrigger extends AbstractTrigger {
                 initContentElementsIfNeed(info);
             } else {
                 info.setResolvedFile(null);
-                info.setLastModifications(0l);
+                info.setLastModifications(0L);
             }
-        } catch (IOException ioe) {
+        } catch (IOException | InterruptedException ioe) {
             throw new XTriggerException(ioe);
-        } catch (InterruptedException ie) {
-            throw new XTriggerException(ie);
         }
     }
 
@@ -218,8 +226,8 @@ public class FileNameTrigger extends AbstractTrigger {
             FilePath resolvedFile = info.getResolvedFile();
             final Long lastModification = info.getLastModifications();
             final String resolvedFilePath = (resolvedFile != null) ? resolvedFile.getRemote() : null;
-            boolean changedFileName = newResolvedFile.act(new FilePath.FileCallable<Boolean>() {
-                public Boolean invoke(File newResolvedFile, VirtualChannel channel) throws IOException, InterruptedException {
+            boolean changedFileName = newResolvedFile.act(new MasterToSlaveFileCallable<Boolean>() {
+                public Boolean invoke(File newResolvedFile, VirtualChannel channel) {
                     try {
                         FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, info, resolvedFilePath, lastModification, newResolvedFile);
                         return service.checkFileName();
@@ -243,8 +251,8 @@ public class FileNameTrigger extends AbstractTrigger {
                         log.info("No modifications according the given criteria.");
                         return false;
                     }
-                    boolean isTriggered = newResolvedFile.act(new FilePath.FileCallable<Boolean>() {
-                        public Boolean invoke(File newResolvedFile, VirtualChannel channel) throws IOException, InterruptedException {
+                    boolean isTriggered = newResolvedFile.act(new MasterToSlaveFileCallable<Boolean>() {
+                        public Boolean invoke(File newResolvedFile, VirtualChannel channel) {
                             boolean isTriggered;
                             try {
                                 FSTriggerFileNameCheckedModifiedService service = new FSTriggerFileNameCheckedModifiedService(log, info, resolvedFilePath, lastModification, newResolvedFile);
@@ -265,12 +273,8 @@ public class FileNameTrigger extends AbstractTrigger {
             }
 
 
-        } catch (IOException ioe) {
-            throw new XTriggerException(ioe);
-        } catch (InterruptedException ie) {
+        } catch (Throwable ie) {
             throw new XTriggerException(ie);
-        } catch (Throwable e) {
-            throw new XTriggerException(e);
         }
         return false;
     }
@@ -292,12 +296,12 @@ public class FileNameTrigger extends AbstractTrigger {
 
     @Override
     public FileNameTriggerDescriptor getDescriptor() {
-        return (FileNameTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (FileNameTriggerDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     public final class FSTriggerFilesAction extends FSTriggerAction {
 
-        private transient String actionTitle;
+        private final transient String actionTitle;
 
         public FSTriggerFilesAction(String actionTitle) {
             this.actionTitle = actionTitle;
@@ -330,7 +334,10 @@ public class FileNameTrigger extends AbstractTrigger {
 
         @SuppressWarnings("unused")
         public void writeLogTo(XMLOutput out) throws IOException {
-            new AnnotatedLargeText<FSTriggerFilesAction>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+            long pos = new AnnotatedLargeText<>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+            if (pos == 0) {
+                LOGGER.warning("Failed to write log for FileNameTrigger");
+            }
         }
     }
 
@@ -361,7 +368,7 @@ public class FileNameTrigger extends AbstractTrigger {
 
         @SuppressWarnings("unchecked")
         public DescriptorExtensionList getListFSTriggerFileNameDescriptors() {
-            return DescriptorExtensionList.createDescriptorList(Hudson.getInstance(), FSTriggerContentFileType.class);
+            return DescriptorExtensionList.createDescriptorList(Jenkins.get(), FSTriggerContentFileType.class);
         }
 
         /**
@@ -522,7 +529,7 @@ public class FileNameTrigger extends AbstractTrigger {
     @SuppressWarnings({"unused", "deprecation"})
     @Deprecated
     public FSTriggerContentFileType[] getContentFileTypes() {
-        return contentFileTypes;
+        return Arrays.copyOf(contentFileTypes, contentFileTypes.length);
     }
 
     @SuppressWarnings({"unused", "deprecation"})
@@ -544,5 +551,5 @@ public class FileNameTrigger extends AbstractTrigger {
 
         return this;
     }
-
+    private static final long serialVersionUID = 1L;
 }

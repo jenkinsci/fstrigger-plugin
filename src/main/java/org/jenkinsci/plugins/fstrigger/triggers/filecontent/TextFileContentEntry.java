@@ -10,7 +10,7 @@ import java.io.Serializable;
  */
 public class TextFileContentEntry implements Serializable {
 
-    private String regex;
+    private final String regex;
 
     @DataBoundConstructor
     public TextFileContentEntry(String regex) {
