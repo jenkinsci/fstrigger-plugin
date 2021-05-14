@@ -70,7 +70,9 @@ public class XMLFileContent extends FSTriggerContentFileType {
     private Document initXMLFile(File file) throws XTriggerException {
         Document xmlDocument;
         try {
-            xmlDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file);
+            DocumentBuilderFactory xmlDocFactory = DocumentBuilderFactory.newInstance() ;
+            xmlDocFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true) ;
+            xmlDocument = xmlDocFactory.newDocumentBuilder().parse(file);
         } catch (SAXException e) {
             throw new XTriggerException(e);
         } catch (IOException e) {
