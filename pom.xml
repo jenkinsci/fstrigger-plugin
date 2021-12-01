@@ -37,8 +37,8 @@
         <revision>0.42</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
-        <xtrigger.lib.version>0.34</xtrigger.lib.version>
-        <jenkins.version>2.204.6</jenkins.version>
+        <xtrigger.lib.version>0.36</xtrigger.lib.version>
+        <jenkins.version>2.277.4</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
     </properties>
