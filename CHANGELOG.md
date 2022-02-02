@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 1.00
+
+* Update dependency to XTrigger-API plugin instead of XTrigger-lib
+* Also removes transient dependency on EnvInject-lib
+
 ## Release 0.39
 
 * Fix XPath computation  

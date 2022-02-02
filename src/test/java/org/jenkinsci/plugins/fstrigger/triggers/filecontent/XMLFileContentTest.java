@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
-import org.jenkinsci.lib.xtrigger.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.junit.Assert;
 import org.junit.Before;

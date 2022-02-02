@@ -18,10 +18,10 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.jelly.XMLOutput;
-import org.jenkinsci.lib.xtrigger.AbstractTrigger;
-import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
-import org.jenkinsci.lib.xtrigger.XTriggerException;
-import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
@@ -88,7 +88,7 @@ public class FileNameTrigger extends AbstractTrigger {
         try {
             FSTriggerComputeFileService service = new FSTriggerComputeFileService();
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = service.computedFile(pollingNode, (AbstractProject) project, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
+                FilePath resolvedFile = service.computedFile(pollingNode, (Job) project, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());

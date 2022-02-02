@@ -15,11 +15,11 @@ import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import org.jenkinsci.lib.envinject.EnvInjectException;
-import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
-import org.jenkinsci.lib.xtrigger.AbstractTrigger;
-import org.jenkinsci.lib.xtrigger.XTriggerDescriptor;
-import org.jenkinsci.lib.xtrigger.XTriggerException;
-import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.plugins.envinjectapi.util.EnvVarsResolver;
+import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerAction;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -138,10 +138,13 @@ public class FolderContentTrigger extends AbstractTrigger {
     @Override
     protected synchronized boolean checkIfModified(Node pollingNode, final XTriggerLog log) throws XTriggerException {
 
-        EnvVarsResolver varsRetriever = new EnvVarsResolver();
         Map<String, String> envVars;
         try {
-            envVars = varsRetriever.getPollingEnvVars((AbstractProject) job, pollingNode);
+        	if( job != null ) {
+        		envVars = EnvVarsResolver.getPollingEnvVars((AbstractProject) job, pollingNode);
+        	} else {
+        		envVars = new HashMap<String , String>() ;
+        	}
         } catch (EnvInjectException e) {
             throw new XTriggerException(e);
         }
@@ -367,10 +370,9 @@ public class FolderContentTrigger extends AbstractTrigger {
     @Override
     public void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) {
 
-        EnvVarsResolver varsRetriever = new EnvVarsResolver();
         Map<String, String> envVars = null;
         try {
-            envVars = varsRetriever.getPollingEnvVars((AbstractProject) project, pollingNode);
+            envVars = EnvVarsResolver.getPollingEnvVars((AbstractProject) project, pollingNode);
         } catch (EnvInjectException e) {
             //Ignore the exception process, just log it
             LOGGER.log(Level.SEVERE, e.getMessage());
