@@ -3,8 +3,8 @@ package org.jenkinsci.plugins.fstrigger.service;
 import hudson.Util;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
-import org.jenkinsci.lib.xtrigger.XTriggerException;
-import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTrigger;
 import org.jenkinsci.plugins.fstrigger.triggers.FileNameTriggerInfo;
 

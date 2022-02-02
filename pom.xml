@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.12</version>
+        <version>4.33</version>
     </parent>
 
     <artifactId>fstrigger</artifactId>
@@ -34,11 +34,11 @@
     </developers>
 
     <properties>
-        <revision>0.43</revision>
+        <revision>1.00</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
-        <xtrigger.lib.version>0.36</xtrigger.lib.version>
-        <jenkins.version>2.277.4</jenkins.version>
+        <xtrigger.api.version>0.2</xtrigger.api.version>
+        <jenkins.version>2.263.4</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
     </properties>
@@ -47,8 +47,8 @@
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-				<artifactId>bom-2.204.x</artifactId>
-				<version>16</version>
+				<artifactId>bom-2.263.x</artifactId>
+				<version>984.vb5eaac999a7e</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -68,9 +68,9 @@
 		</dependency>
 
         <dependency>
-            <groupId>org.jenkins-ci.lib</groupId>
-            <artifactId>xtrigger-lib</artifactId>
-            <version>${xtrigger.lib.version}</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>xtrigger-api</artifactId>
+            <version>${xtrigger.api.version}</version>
         </dependency>
 
         <dependency>

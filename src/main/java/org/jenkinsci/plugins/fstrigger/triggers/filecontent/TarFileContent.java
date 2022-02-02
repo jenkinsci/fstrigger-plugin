@@ -4,8 +4,8 @@ import hudson.Extension;
 
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
-import org.jenkinsci.lib.xtrigger.XTriggerException;
-import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileTypeDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;

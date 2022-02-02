@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
 import org.hamcrest.core.IsNull;
-import org.jenkinsci.lib.xtrigger.XTriggerException;
-import org.jenkinsci.lib.xtrigger.XTriggerLog;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.junit.Assert;
 import org.junit.Before;

@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.fstrigger;
 
-import org.jenkinsci.lib.xtrigger.XTriggerCause;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerCause;
 
 /**
  * @author Gregory Boissinot
