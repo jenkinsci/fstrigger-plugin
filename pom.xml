@@ -22,10 +22,8 @@
 
     <developers>
         <developer>
-            <id>gbois</id>
-            <name>Gregory Boissinot</name>
-            <email>gregory.boissinot@gmail.com</email>
-            <timezone>+1</timezone>
+            <id>tonynoble</id>
+            <name>Tony Noble</name>
             <roles>
                 <role>Project Owner</role>
                 <role>Project Lead Developer</role>
