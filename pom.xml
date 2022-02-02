@@ -10,7 +10,7 @@
     <artifactId>fstrigger</artifactId>
     <packaging>hpi</packaging>
     <name>Jenkins Filesystem Trigger Plug-in</name>
-    <version>${revision}${changelist}</version>
+    <version>1.00</version>
     <url>https://github.com/jenkinsci/fstrigger-plugin</url>
 
     <licenses>
@@ -89,7 +89,7 @@
         <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
         <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
         <url>https://github.com/${gitHubRepo}</url>
-        <tag>${scmTag}</tag>
+        <tag>fstrigger-1.00</tag>
     </scm>
 
     <repositories>
