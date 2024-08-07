@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.51</version>
+        <version>4.86</version>
     </parent>
 
     <artifactId>fstrigger</artifactId>
@@ -36,7 +36,7 @@
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
         <xtrigger.api.version>0.4</xtrigger.api.version>
-        <jenkins.version>2.263.4</jenkins.version>
+        <jenkins.version>2.440.3</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
     </properties>
@@ -45,8 +45,8 @@
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-				<artifactId>bom-2.263.x</artifactId>
-				<version>984.vb5eaac999a7e</version>
+				<artifactId>bom-2.440.x</artifactId>
+				<version>3234.v5ca_5154341ef</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
