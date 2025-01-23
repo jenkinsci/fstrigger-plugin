@@ -10,7 +10,6 @@ import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
-import hudson.util.StreamTaskListener;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import net.sf.json.JSON;
@@ -88,7 +87,7 @@ public class FileNameTrigger extends AbstractTrigger {
         try {
             FSTriggerComputeFileService service = new FSTriggerComputeFileService();
             for (FileNameTriggerInfo info : fileInfo) {
-                FilePath resolvedFile = service.computedFile(pollingNode, (Job) project, info, new XTriggerLog((StreamTaskListener) TaskListener.NULL));
+                FilePath resolvedFile = service.computedFile(pollingNode, (Job) project, info, new XTriggerLog(TaskListener.NULL));
                 if (resolvedFile != null) {
                     info.setResolvedFile(resolvedFile);
                     info.setLastModifications(resolvedFile.lastModified());
