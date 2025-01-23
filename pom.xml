@@ -10,7 +10,7 @@
     <artifactId>fstrigger</artifactId>
     <packaging>hpi</packaging>
     <name>Jenkins Filesystem Trigger Plug-in</name>
-    <version>1.01</version>
+    <version>${revision}${changelist}</version>
     <url>https://github.com/jenkinsci/fstrigger-plugin</url>
 
     <licenses>
@@ -32,7 +32,7 @@
     </developers>
 
     <properties>
-        <revision>1.01</revision>
+        <revision>1.02</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
         <xtrigger.api.version>1.1</xtrigger.api.version>
