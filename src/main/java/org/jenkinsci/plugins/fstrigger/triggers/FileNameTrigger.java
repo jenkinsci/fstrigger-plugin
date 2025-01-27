@@ -26,7 +26,7 @@ import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerComputeFileService;
 import org.jenkinsci.plugins.fstrigger.service.FSTriggerFileNameCheckedModifiedService;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.File;
 import java.io.IOException;
@@ -397,7 +397,7 @@ public class FileNameTrigger extends AbstractTrigger {
         }
 
         @Override
-        public FileNameTrigger newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public FileNameTrigger newInstance(StaplerRequest2 req, JSONObject formData) throws FormException {
 
             FileNameTrigger fileNameTrigger;
             String cronTab = formData.getString("cronTabSpec");
@@ -424,7 +424,7 @@ public class FileNameTrigger extends AbstractTrigger {
 
         }
 
-        private FileNameTriggerInfo fillAndGetEntry(StaplerRequest req, JSONObject entryObject) {
+        private FileNameTriggerInfo fillAndGetEntry(StaplerRequest2 req, JSONObject entryObject) {
             FileNameTriggerInfo info = new FileNameTriggerInfo();
             info.setFilePathPattern(Util.fixEmpty(entryObject.getString("filePathPattern")));
             info.setStrategy(entryObject.getString("strategy"));
@@ -433,7 +433,7 @@ public class FileNameTrigger extends AbstractTrigger {
 
         }
 
-        private void setInfoContentType(StaplerRequest req, JSONObject entryObject, FileNameTriggerInfo info) {
+        private void setInfoContentType(StaplerRequest2 req, JSONObject entryObject, FileNameTriggerInfo info) {
             Object inspectingFileContentObject = entryObject.get("inspectingContentFile");
             if (inspectingFileContentObject == null) {
                 unsetContentType(info);
@@ -459,7 +459,7 @@ public class FileNameTrigger extends AbstractTrigger {
             return inspectingFileContentJSONObject.size() == 1;
         }
 
-        private void setContentNature(StaplerRequest req, FileNameTriggerInfo info, JSONObject inspectingFileContentJSONObject) {
+        private void setContentNature(StaplerRequest2 req, FileNameTriggerInfo info, JSONObject inspectingFileContentJSONObject) {
             JSON contentFileTypesJsonElt;
             try {
                 contentFileTypesJsonElt = inspectingFileContentJSONObject.getJSONArray("contentFileTypes");
