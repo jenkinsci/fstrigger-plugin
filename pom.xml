@@ -39,7 +39,6 @@
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.479</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <java.level>8</java.level>
         <gitHubRepo>jenkinsci/fstrigger-plugin</gitHubRepo>
     </properties>
 
@@ -74,14 +73,8 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -109,6 +102,6 @@
         </pluginRepository>
     </pluginRepositories>
 
-</project>  
-  
+</project>
+
 

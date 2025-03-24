@@ -1,12 +1,16 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.io.File;
 import java.net.URISyntaxException;
 
 /**
  * @author Gregory Boissinot
  */
-public class SourceManifestFileContentTest extends PropertiesFileContentTest {
+@ExtendWith(MockitoExtension.class)
+class SourceManifestFileContentTest extends PropertiesFileContentTest {
 
     @Override
     protected File getInitFile() throws URISyntaxException {

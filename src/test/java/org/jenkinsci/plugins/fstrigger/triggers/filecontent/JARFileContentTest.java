@@ -1,9 +1,8 @@
 package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 
-import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -11,17 +10,12 @@ import java.net.URISyntaxException;
 /**
  * @author Gregory Boissinot
  */
-public class JARFileContentTest extends ZIPFileContentTest {
+@ExtendWith(MockitoExtension.class)
+class JARFileContentTest extends ZIPFileContentTest {
 
-    @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    @BeforeEach
+    void setUp() {
         type = new JARFileContent();
-    }
-
-    @Override
-    public FSTriggerContentFileType getTypeInstance() {
-        return type;
     }
 
     @Override

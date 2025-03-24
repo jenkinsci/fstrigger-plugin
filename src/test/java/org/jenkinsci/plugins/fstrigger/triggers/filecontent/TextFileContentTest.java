@@ -3,72 +3,79 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Gregory Boissinot
  */
-public class TextFileContentTest extends FileContentAbstractTest {
+@ExtendWith(MockitoExtension.class)
+class TextFileContentTest extends FileContentAbstractTest {
 
-    FSTriggerContentFileType type;
+    protected FSTriggerContentFileType type;
 
     @Mock
-    XTriggerLog log;
+    protected XTriggerLog log;
 
     @Override
-    public FSTriggerContentFileType getTypeInstance() {
+    protected FSTriggerContentFileType getTypeInstance() {
         return type;
     }
 
-    @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-        List<TextFileContentEntry> expressions = new ArrayList<TextFileContentEntry>();
+    @BeforeEach
+    void setUp() {
+        List<TextFileContentEntry> expressions = new ArrayList<>();
         expressions.add(new TextFileContentEntry("\\w*ERROR\\s*\\w*"));
         type = new TextFileContent(expressions);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testInitNullFileRefAsInput() throws URISyntaxException, XTriggerException {
-        initType(null);
-    }
-
-    @Test(expected = XTriggerException.class)
-    public void testInitNoExistFileAsInput() throws URISyntaxException, XTriggerException {
-        File initFile = new File("noExist.txt");
-        initType(initFile);
-    }
-
-    @Test(expected = XTriggerException.class)
-    public void testPollingNewFileNoExistAsInput() throws XTriggerException, URISyntaxException {
-        File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
-        initType(initFile);
-        type.isTriggeringBuild(new File("noExist"), log);
-    }
-
-
-    @Test(expected = NullPointerException.class)
-    public void testPollingNewFileNullReferenceAsInput() throws XTriggerException, URISyntaxException {
-        File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
-        initType(initFile);
-        type.isTriggeringBuild(null, log);
+    @Test
+    void testInitNullFileRefAsInput() {
+        assertThrows(NullPointerException.class, () ->
+            initType(null));
     }
 
     @Test
-    public void testPolling() throws URISyntaxException, XTriggerException {
+    void testInitNoExistFileAsInput() {
+        File initFile = new File("noExist.txt");
+        assertThrows(XTriggerException.class, () ->
+            initType(initFile));
+    }
+
+    @Test
+    void testPollingNewFileNoExistAsInput() throws Exception {
         File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
         initType(initFile);
-        Assert.assertFalse(type.isTriggeringBuild(initFile, log));
+        assertThrows(XTriggerException.class, () ->
+            type.isTriggeringBuild(new File("noExist"), log));
+    }
+
+
+    @Test
+    void testPollingNewFileNullReferenceAsInput() throws Exception {
+        File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
+        initType(initFile);
+        assertThrows(NullPointerException.class, () ->
+            type.isTriggeringBuild(null, log));
+    }
+
+    @Test
+    void testPolling() throws Exception {
+        File initFile = new File(this.getClass().getResource("LogTextFileContent/initLog.txt").toURI());
+        initType(initFile);
+        assertFalse(type.isTriggeringBuild(initFile, log));
         File newFile = new File(this.getClass().getResource("LogTextFileContent/newLog.txt").toURI());
-        Assert.assertTrue(type.isTriggeringBuild(newFile, log));
+        assertTrue(type.isTriggeringBuild(newFile, log));
     }
 }
