@@ -3,14 +3,17 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 
 /**
  * @author Gregory Boissinot
  */
-public abstract class FileContentAbstractTest {
+@ExtendWith(MockitoExtension.class)
+abstract class FileContentAbstractTest {
 
     @Mock
     protected XTriggerLog log;
@@ -19,6 +22,6 @@ public abstract class FileContentAbstractTest {
         getTypeInstance().initMemoryFields("jobTest", file);
     }
 
-    public abstract FSTriggerContentFileType getTypeInstance();
+    protected abstract FSTriggerContentFileType getTypeInstance();
 
 }

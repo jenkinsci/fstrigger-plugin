@@ -3,25 +3,30 @@ package org.jenkinsci.plugins.fstrigger.triggers.filecontent;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.jenkinsci.plugins.fstrigger.core.FSTriggerContentFileType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.net.URISyntaxException;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author Gregory Boissinot
  */
-public abstract class AbstractArchiveFileContentTest extends FileContentAbstractTest {
+@ExtendWith(MockitoExtension.class)
+abstract class AbstractArchiveFileContentTest extends FileContentAbstractTest {
 
     protected FSTriggerContentFileType type;
 
     @Mock
-    XTriggerLog log;
+    protected XTriggerLog log;
 
-
-    public FSTriggerContentFileType getTypeInstance() {
+    protected FSTriggerContentFileType getTypeInstance() {
         return type;
     }
 
@@ -35,48 +40,53 @@ public abstract class AbstractArchiveFileContentTest extends FileContentAbstract
 
     protected abstract File getNotGoodTypeFile() throws URISyntaxException;
 
-    @Test(expected = NullPointerException.class)
-    public void testInitNullFileRefAsInput() throws URISyntaxException, XTriggerException {
-        initType(null);
-    }
-
-    @Test(expected = XTriggerException.class)
-    public void testInitNoExistFileAsInput() throws URISyntaxException, XTriggerException {
-        initType(getNoExistFile());
-    }
-
-    @Test(expected = XTriggerException.class)
-    public void testInitNoGoodFileAsInput() throws URISyntaxException, XTriggerException {
-        initType(getNotGoodTypeFile());
-    }
-
-    @Test(expected = XTriggerException.class)
-    public void testPollingNewFileNoExistAsInput() throws XTriggerException, URISyntaxException {
-        initType(getInitFile());
-        type.isTriggeringBuild(getNoExistFile(), log);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testPollingNewFileNullReferenceAsInput() throws XTriggerException, URISyntaxException {
-        initType(getInitFile());
-        type.isTriggeringBuild(null, log);
+    @Test
+    void testInitNullFileRefAsInput() {
+        assertThrows(NullPointerException.class, () ->
+            initType(null));
     }
 
     @Test
-    public void testPollingSameFile() throws URISyntaxException, XTriggerException {
-        initType(getInitFile());
-        Assert.assertFalse(type.isTriggeringBuild(getInitFile(), log));
+    void testInitNoExistFileAsInput() {
+        assertThrows(XTriggerException.class, () ->
+            initType(getNoExistFile()));
     }
 
     @Test
-    public void testPollingNewContentOneLeastFile() throws URISyntaxException, XTriggerException {
-        initType(getInitFile());
-        Assert.assertTrue(type.isTriggeringBuild(getNewFileChangedContentOneFile(), log));
+    void testInitNoGoodFileAsInput() {
+        assertThrows(XTriggerException.class, () ->
+            initType(getNotGoodTypeFile()));
     }
 
     @Test
-    public void testPollingNewContentAddedFile() throws URISyntaxException, XTriggerException {
+    void testPollingNewFileNoExistAsInput() throws Exception {
         initType(getInitFile());
-        Assert.assertTrue(type.isTriggeringBuild(getNewFileAddedFile(), log));
+        assertThrows(XTriggerException.class, () ->
+            type.isTriggeringBuild(getNoExistFile(), log));
+    }
+
+    @Test
+    void testPollingNewFileNullReferenceAsInput() throws Exception {
+        initType(getInitFile());
+        assertThrows(NullPointerException.class, () ->
+            type.isTriggeringBuild(null, log));
+    }
+
+    @Test
+    void testPollingSameFile() throws Exception {
+        initType(getInitFile());
+        assertFalse(type.isTriggeringBuild(getInitFile(), log));
+    }
+
+    @Test
+    void testPollingNewContentOneLeastFile() throws Exception {
+        initType(getInitFile());
+        assertTrue(type.isTriggeringBuild(getNewFileChangedContentOneFile(), log));
+    }
+
+    @Test
+    void testPollingNewContentAddedFile() throws Exception {
+        initType(getInitFile());
+        assertTrue(type.isTriggeringBuild(getNewFileAddedFile(), log));
     }
 }
